@@ -12,12 +12,23 @@ pub enum Grade {
 
 #[account]
 pub struct Card {
-    hp: u8,
-    grade: u8,
-    property: String
+    pub hp: u8,
+    pub grade: u8,
+    pub property: String
 }
 
 
-impl Card {
-    const INIT_SPACE: usize = 8 + 1 + 1 + 64;
+// impl Card {
+//     const INIT_SPACE: usize = 8 + 1 + 1 + 64;
+// }
+
+#[account]
+// #[derive(InitSpace)]
+pub struct AuthVault {
+    pub bump: u8,
+    pub mint_bump: u8
+}
+
+impl AuthVault {
+    pub const INIT_SPACE: usize = 8 + 1 + 1;
 }

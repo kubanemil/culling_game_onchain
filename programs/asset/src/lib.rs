@@ -16,6 +16,10 @@ pub mod asset {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::handler(ctx)
+        ctx.accounts.init(ctx.bumps)
+    }
+
+    pub fn buy_token(ctx: Context<BuyToken>, amount: u64) -> Result<()> {
+        ctx.accounts.buy_token(amount)
     }
 }
