@@ -1,24 +1,26 @@
 use crate::state::AuthVault;
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenInterface};
+use anchor_spl::token::{self, Token};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    #[account(init, seeds=[b"emilToken", signer.key.as_ref()], payer=signer, bump, mint::decimals=6, mint::authority=vault)]
-    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(init, seeds=[b"emilToken", vault.key().as_ref()], payer=signer, bump, mint::decimals=6, mint::authority=vault)]
+    pub mint: Account<'info, token::Mint>,
 
-    #[account(init, payer=signer, seeds=[b"authVault"], bump, space=AuthVault::INIT_SPACE)]
+    #[account(init, payer=signer, seeds=[b"authVault", signer.key().as_ref()], bump, space=AuthVault::INIT_SPACE)]
     pub vault: Account<'info, AuthVault>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
 impl<'info> Initialize<'info> {
     pub fn init(&mut self, bumps: InitializeBumps) -> Result<()> {
+        msg!("Vault: {}", self.vault.key());
+        msg!("Mint: {}", self.mint.key());
         self.vault.set_inner(AuthVault {
             bump: bumps.vault,
             mint_bump: bumps.mint,

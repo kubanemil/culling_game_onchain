@@ -9,7 +9,7 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("BbkymsEZeYP5uGvYAkrcnBvCTyvXH6bCtmSm6Dd8pUSh");
+declare_id!("BwDuywJ5NxriMUEJ7EMKFth7joH3W2snbMfQtKp4nwrf");
 
 #[program]
 pub mod asset {

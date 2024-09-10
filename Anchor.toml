@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-asset = "BbkymsEZeYP5uGvYAkrcnBvCTyvXH6bCtmSm6Dd8pUSh"
+asset = "BwDuywJ5NxriMUEJ7EMKFth7joH3W2snbMfQtKp4nwrf"
 
 [registry]
 url = "https://api.apr.dev"
