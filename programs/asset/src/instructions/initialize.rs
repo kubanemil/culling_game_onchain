@@ -1,6 +1,6 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{TokenInterface, Mint};
 use crate::state::AuthVault;
+use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{Mint, TokenInterface};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
@@ -19,12 +19,10 @@ pub struct Initialize<'info> {
 
 impl<'info> Initialize<'info> {
     pub fn init(&mut self, bumps: InitializeBumps) -> Result<()> {
-        self.vault.set_inner(
-            AuthVault {
-                bump: bumps.vault,
-                mint_bump: bumps.mint,
-            }
-        );
+        self.vault.set_inner(AuthVault {
+            bump: bumps.vault,
+            mint_bump: bumps.mint,
+        });
         Ok(())
     }
 }

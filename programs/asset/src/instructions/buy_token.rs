@@ -1,8 +1,11 @@
+use crate::state::AuthVault;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::system_instruction::transfer;
-use anchor_spl::{associated_token::AssociatedToken, token::{mint_to, MintTo, Token, TokenAccount}};
 use anchor_spl::token_interface::Mint;
-use crate::state::AuthVault;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{mint_to, MintTo, Token, TokenAccount},
+};
 
 #[derive(Accounts)]
 pub struct BuyToken<'info> {
@@ -31,7 +34,7 @@ impl<'info> BuyToken<'info> {
         let accounts = MintTo {
             mint: self.mint.to_account_info(),
             to: self.signer_ata.to_account_info(),
-            authority: self.vault.to_account_info()
+            authority: self.vault.to_account_info(),
         };
 
         let seeds = &[&b"authVault"[..], &[self.vault.bump]];
