@@ -7,7 +7,7 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    #[account(init, seeds=[b"emilToken", vault.key().as_ref()], payer=signer, bump, mint::decimals=6, mint::authority=vault)]
+    #[account(init, seeds=[b"cullingToken", vault.key().as_ref()], payer=signer, bump, mint::decimals=6, mint::authority=vault)]
     pub mint: Account<'info, token::Mint>,
 
     #[account(init, payer=signer, seeds=[b"authVault", signer.key().as_ref()], bump, space=AuthVault::INIT_SPACE)]
@@ -19,8 +19,7 @@ pub struct Initialize<'info> {
 
 impl<'info> Initialize<'info> {
     pub fn init(&mut self, bumps: InitializeBumps) -> Result<()> {
-        msg!("Vault: {}", self.vault.key());
-        msg!("Mint: {}", self.mint.key());
+        msg!("Vault, Mint: {} | {}", self.vault.key(), self.mint.key());
         self.vault.set_inner(AuthVault {
             bump: bumps.vault,
             mint_bump: bumps.mint,

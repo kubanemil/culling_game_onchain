@@ -1,6 +1,6 @@
 use crate::state::AuthVault;
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::system_instruction;
+use anchor_lang::solana_program::{program, system_instruction};
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Token};
 
@@ -12,7 +12,7 @@ pub struct BuyToken<'info> {
     #[account(init_if_needed, payer=signer, associated_token::mint=mint, associated_token::authority=signer)]
     pub signer_ata: Account<'info, token::TokenAccount>,
 
-    #[account(mut, seeds=[b"emilToken", vault.key().as_ref()], bump=vault.mint_bump)]
+    #[account(mut, seeds=[b"cullingToken", vault.key().as_ref()], bump=vault.mint_bump)]
     pub mint: Account<'info, token::Mint>,
 
     #[account(mut, seeds=[b"authVault", signer.key().as_ref()], bump=vault.bump)]
@@ -25,8 +25,18 @@ pub struct BuyToken<'info> {
 
 impl<'info> BuyToken<'info> {
     pub fn buy_token(&mut self, amount: u64) -> Result<()> {
-        let lamports = amount / 100;
-        system_instruction::transfer(self.signer.key, &self.vault.key(), lamports);
+        let lamports = amount * 1000;
+        let transfer_ix =
+            system_instruction::transfer(self.signer.key, &self.vault.key(), lamports);
+
+        program::invoke(
+            &transfer_ix,
+            &[
+                self.signer.to_account_info(),
+                self.vault.to_account_info(),
+                self.system_program.to_account_info(),
+            ],
+        )?;
 
         let accounts = token::MintTo {
             mint: self.mint.to_account_info(),
