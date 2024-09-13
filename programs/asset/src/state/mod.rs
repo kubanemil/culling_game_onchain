@@ -12,7 +12,7 @@ pub enum Grade {
 pub struct Card {
     pub hp: u8,
     pub grade: u8,
-    pub property: String,
+    pub metadata: String,
 }
 
 // impl Card {
@@ -20,7 +20,6 @@ pub struct Card {
 // }
 
 #[account]
-// #[derive(InitSpace)]
 pub struct AuthVault {
     pub bump: u8,
     pub mint_bump: u8,

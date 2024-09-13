@@ -9,11 +9,11 @@ pub struct BuyToken<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    #[account(init_if_needed, payer=signer, associated_token::mint=mint, associated_token::authority=signer)]
-    pub signer_ata: Account<'info, token::TokenAccount>,
-
     #[account(mut, seeds=[b"cullingToken", vault.key().as_ref()], bump=vault.mint_bump)]
     pub mint: Account<'info, token::Mint>,
+
+    #[account(init_if_needed, payer=signer, associated_token::mint=mint, associated_token::authority=signer)]
+    pub signer_ata: Account<'info, token::TokenAccount>,
 
     #[account(mut, seeds=[b"authVault", signer.key().as_ref()], bump=vault.bump)]
     pub vault: Account<'info, AuthVault>,
@@ -26,9 +26,10 @@ pub struct BuyToken<'info> {
 impl<'info> BuyToken<'info> {
     pub fn buy_token(&mut self, amount: u64) -> Result<()> {
         let lamports = amount * 1000;
+
+        // transfer funds to vault
         let transfer_ix =
             system_instruction::transfer(self.signer.key, &self.vault.key(), lamports);
-
         program::invoke(
             &transfer_ix,
             &[
@@ -38,6 +39,7 @@ impl<'info> BuyToken<'info> {
             ],
         )?;
 
+        // mint tokens to user
         let accounts = token::MintTo {
             mint: self.mint.to_account_info(),
             to: self.signer_ata.to_account_info(),
