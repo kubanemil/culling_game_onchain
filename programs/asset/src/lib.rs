@@ -22,4 +22,8 @@ pub mod asset {
     pub fn buy_token(ctx: Context<BuyToken>, amount: u64) -> Result<()> {
         ctx.accounts.buy_token(amount)
     }
+
+    pub fn buy_card(ctx: Context<BuyCard>, card_id: u8) -> Result<()> {
+        ctx.accounts.buy_card(card_id)
+    }
 }
