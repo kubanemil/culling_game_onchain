@@ -32,7 +32,7 @@ pub struct BuyCard<'info> {
 impl<'info> BuyCard<'info> {
     pub fn buy_card(&mut self, card_id: u8) -> Result<()> {
         msg!("card ID & address: {} | {}", &card_id, self.card.key());
-        let tokens_amount = 10 * 10u64.pow(6);
+        let tokens_amount = 10 * 10u64.pow(6); // 10 cullingTokens
 
         // transfer tokens to vault
         let accounts = token::Transfer {

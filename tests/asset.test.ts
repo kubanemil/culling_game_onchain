@@ -61,11 +61,20 @@ describe("asset", () => {
 
   it("buy a card", async () => {
     const cardId = 7;
+    const cardTokenPrice = 10 * 10 ** 6;
+    const [vault, mint_address] = await getVaultMintAddress(program, user);
+    const vaultAta = await getAssociatedTokenAddressSync(
+      mint_address,
+      vault,
+      true
+    );
 
-    const cardBuffer = Buffer.alloc(1);
-    cardBuffer.writeUInt8(cardId);
     const [cardAddress] = findPDA(
-      [Buffer.from("card"), cardBuffer, user.toBuffer()],
+      [
+        Buffer.from("card"),
+        Buffer.from(new Uint8Array([cardId])),
+        user.toBuffer(),
+      ],
       program.programId
     );
     console.log("card address: ", cardAddress.toString());
@@ -77,6 +86,21 @@ describe("asset", () => {
       })
       .rpc();
     const logs = await getLogs(program, tx);
-    console.log(logs);
+    console.log("buy_card() logs:", logs);
+
+    // check balance
+    const vaultAtaBalance = Number(
+      (await conn.getTokenAccountBalance(vaultAta)).value.amount
+    );
+    console.log(vaultAtaBalance);
+    await expect(vaultAtaBalance).greaterThanOrEqual(
+      cardTokenPrice,
+      "vault did not receive full amount"
+    );
+
+    // check card token
+    const cardInfo = await getMint(conn, cardAddress);
+    assert(cardInfo.decimals == 0, "Card is not unit");
+    assert(cardInfo.mintAuthority.equals(user), "Wrong owner of the card");
   });
 });
