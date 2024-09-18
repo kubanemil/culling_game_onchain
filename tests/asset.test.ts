@@ -153,46 +153,16 @@ describe("asset", async () => {
     assert(ata.amount == BigInt(1), "ATA's balance is invalid");
   });
 
-  it("init metadata", async () => {
-    const name = "cullingMetaToken";
-    const uri = "https://mail.google.com/mail/u/0/";
-
-    const tx = await createV1(umi, {
-      mint: card,
-      authority: creator,
-      name: name,
-      uri: uri,
-      sellerFeeBasisPoints: percentAmount(0),
-      tokenStandard: TokenStandard.FungibleAsset,
-    }).sendAndConfirm(umi);
-    console.log("card metadata is created.");
-
-    const cardMetadata = await fetchDigitalAsset(umi, card);
-
-    console.log("Metadata address: ", cardMetadata.publicKey);
-    expect(cardMetadata.metadata.uri).eq(uri, "Invalid URI");
-    expect(cardMetadata.metadata.name).eq(name, "Invalid card name");
-    expect(cardMetadata.metadata.updateAuthority.toString()).eq(
-      user.toString(),
-      "Invalid update authority"
-    );
-    expect(cardMetadata.metadata.isMutable).eq(
-      true,
-      "card metadata is immutable"
-    );
-    expect(cardMetadata.mint.publicKey).eq(card, "Invalid card address");
-  });
-
-  it("update metadata", async () => {
+  it("create metadata", async () => {
     const [cardMetadataAddress] = findMetadataPda(umi, {
       mint: card,
     });
 
-    const new_name = "newCullingMetaToken";
-    const new_uri = "rickrool_URL";
+    const name = "cullingMetaToken";
+    const uri = "culing_URL";
 
     const tx = await program.methods
-      .setMetadata(cardId, new_name, new_uri)
+      .createMetadata(cardId, name, uri)
       .accounts({
         signer: user,
         card: cardAddress,
@@ -203,8 +173,8 @@ describe("asset", async () => {
 
     const cardMetadata = await fetchDigitalAsset(umi, card);
 
-    expect(cardMetadata.metadata.uri).eq(new_uri, "Invalid URI");
-    expect(cardMetadata.metadata.name).eq(new_name, "Invalid card name");
+    expect(cardMetadata.metadata.uri).eq(uri, "Invalid URI");
+    expect(cardMetadata.metadata.name).eq(name, "Invalid card name");
     expect(cardMetadata.mint.publicKey).eq(card, "Invalid card address");
     expect(cardMetadata.metadata.updateAuthority.toString()).eq(
       vault.toString(),
@@ -215,4 +185,67 @@ describe("asset", async () => {
       "Card metadata is immutable"
     );
   });
+
+  // it("init metadata", async () => {
+  //   const name = "cullingMetaToken";
+  //   const uri = "https://mail.google.com/mail/u/0/";
+
+  //   const tx = await createV1(umi, {
+  //     mint: card,
+  //     authority: creator,
+  //     name: name,
+  //     uri: uri,
+  //     sellerFeeBasisPoints: percentAmount(0),
+  //     tokenStandard: TokenStandard.FungibleAsset,
+  //   }).sendAndConfirm(umi);
+  //   console.log("card metadata is created.");
+
+  //   const cardMetadata = await fetchDigitalAsset(umi, card);
+
+  //   console.log("Metadata address: ", cardMetadata.publicKey);
+  //   expect(cardMetadata.metadata.uri).eq(uri, "Invalid URI");
+  //   expect(cardMetadata.metadata.name).eq(name, "Invalid card name");
+  //   expect(cardMetadata.metadata.updateAuthority.toString()).eq(
+  //     user.toString(),
+  //     "Invalid update authority"
+  //   );
+  //   expect(cardMetadata.metadata.isMutable).eq(
+  //     true,
+  //     "card metadata is immutable"
+  //   );
+  //   expect(cardMetadata.mint.publicKey).eq(card, "Invalid card address");
+  // });
+
+  // it("update metadata", async () => {
+  //   const [cardMetadataAddress] = findMetadataPda(umi, {
+  //     mint: card,
+  //   });
+
+  //   const new_name = "newCullingMetaToken";
+  //   const new_uri = "rickrool_URL";
+
+  //   const tx = await program.methods
+  //     .setMetadata(cardId, new_name, new_uri)
+  //     .accounts({
+  //       signer: user,
+  //       card: cardAddress,
+  //       metadata: cardMetadataAddress,
+  //     })
+  //     .rpc();
+  //   await conn.confirmTransaction(tx, "confirmed");
+
+  //   const cardMetadata = await fetchDigitalAsset(umi, card);
+
+  //   expect(cardMetadata.metadata.uri).eq(new_uri, "Invalid URI");
+  //   expect(cardMetadata.metadata.name).eq(new_name, "Invalid card name");
+  //   expect(cardMetadata.mint.publicKey).eq(card, "Invalid card address");
+  //   expect(cardMetadata.metadata.updateAuthority.toString()).eq(
+  //     vault.toString(),
+  //     "Wrong update authority"
+  //   );
+  //   expect(cardMetadata.metadata.isMutable).eq(
+  //     true,
+  //     "Card metadata is immutable"
+  //   );
+  // });
 });

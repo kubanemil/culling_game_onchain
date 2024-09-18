@@ -35,4 +35,13 @@ pub mod asset {
     ) -> Result<()> {
         ctx.accounts.set_metadata(card_id, name, uri)
     }
+
+    pub fn create_metadata(
+        ctx: Context<CreateMetadata>,
+        card_id: u8,
+        name: String,
+        uri: String,
+    ) -> Result<()> {
+        ctx.accounts.create_metadata(card_id, name, uri)
+    }
 }

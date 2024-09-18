@@ -9,3 +9,6 @@ pub use buy_card::*;
 
 pub mod set_metadata;
 pub use set_metadata::*;
+
+pub mod create_metadata;
+pub use create_metadata::*;
