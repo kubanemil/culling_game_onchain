@@ -26,6 +26,7 @@ impl<'info> Initialize<'info> {
     pub fn init(&mut self, bumps: InitializeBumps) -> Result<()> {
         msg!("Vault, Mint: {} | {}", self.vault.key(), self.mint.key());
         self.vault.set_inner(AuthVault {
+            owner: self.signer.key(),
             bump: bumps.vault,
             mint_bump: bumps.mint,
         });

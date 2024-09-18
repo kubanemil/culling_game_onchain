@@ -21,10 +21,11 @@ pub struct Card {
 
 #[account]
 pub struct AuthVault {
+    pub owner: Pubkey,
     pub bump: u8,
     pub mint_bump: u8,
 }
 
 impl AuthVault {
-    pub const INIT_SPACE: usize = 8 + 1 + 1;
+    pub const INIT_SPACE: usize = 8 + 32 + 1 + 1;
 }

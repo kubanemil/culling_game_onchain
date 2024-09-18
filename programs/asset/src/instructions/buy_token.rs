@@ -48,7 +48,7 @@ impl<'info> BuyToken<'info> {
 
         let seeds = &[
             "authVault".as_bytes(),
-            self.signer.key.as_ref(),
+            self.vault.owner.as_ref(),
             &[self.vault.bump],
         ];
         let signer_seeds = &[seeds.as_slice()];
