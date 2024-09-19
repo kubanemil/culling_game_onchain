@@ -27,21 +27,23 @@ pub mod asset {
         ctx.accounts.buy_card(card_id)
     }
 
-    pub fn set_metadata(
+    pub fn create_metadata(
         ctx: Context<SetMetadata>,
         card_id: u8,
         name: String,
+        symbol: String,
         uri: String,
     ) -> Result<()> {
-        ctx.accounts.set_metadata(card_id, name, uri)
+        ctx.accounts.create_metadata(card_id, name, symbol, uri)
     }
 
-    pub fn create_metadata(
-        ctx: Context<CreateMetadata>,
+    pub fn update_metadata(
+        ctx: Context<SetMetadata>,
         card_id: u8,
         name: String,
+        symbol: String,
         uri: String,
     ) -> Result<()> {
-        ctx.accounts.create_metadata(card_id, name, uri)
+        ctx.accounts.update_metadata(card_id, name, symbol, uri)
     }
 }
