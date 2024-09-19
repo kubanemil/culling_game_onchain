@@ -16,7 +16,7 @@ pub struct SetMetadata<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    #[account(mut, seeds=[b"card", &[card_id][..], signer.key().as_ref()], bump)]
+    #[account(mut, seeds=[b"card", &[card_id][..], vault.owner.as_ref()], bump)]
     pub card: Account<'info, token::Mint>,
 
     #[account(mut, seeds=[b"authVault", signer.key().as_ref()], bump=vault.bump)]

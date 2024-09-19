@@ -17,7 +17,7 @@ pub struct BuyCard<'info> {
     pub card: Account<'info, token::Mint>,
 
     #[account(init_if_needed, payer=signer, associated_token::mint=mint, associated_token::authority=signer)]
-    pub signer_mint_ata: Account<'info, token::TokenAccount>,
+    pub signer_ata: Account<'info, token::TokenAccount>,
 
     #[account(init_if_needed, payer=signer, associated_token::mint=card, associated_token::authority=signer)]
     pub signer_card_ata: Account<'info, token::TokenAccount>,
@@ -42,7 +42,7 @@ impl<'info> BuyCard<'info> {
 
         // transfer tokens to vault
         let transfer_accounts = token::Transfer {
-            from: self.signer_mint_ata.to_account_info(),
+            from: self.signer_ata.to_account_info(),
             to: self.vault_ata.to_account_info(),
             authority: self.signer.to_account_info(),
         };
