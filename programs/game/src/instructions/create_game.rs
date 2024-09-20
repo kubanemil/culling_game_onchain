@@ -10,20 +10,26 @@ pub struct CreateGame<'info> {
     /// CHECK: opponent is given my signer
     pub opponent: UncheckedAccount<'info>,
 
-    #[account(init, payer=signer, space=Game::INIT_SPACE, 
+    #[account(init, payer=signer, space=Game::INIT_SPACE,
         seeds=[b"game", &game_id.to_le_bytes()[..], signer.key().as_ref()], bump)]
     pub game: Account<'info, Game>,
 
-    pub system_program: Program<'info, System>
+    pub system_program: Program<'info, System>,
 }
 
 impl<'info> CreateGame<'info> {
-    pub fn create_game(&mut self, game_id: u32, stake_amount: u64, bumps: CreateGameBumps) -> Result<()> {
+    pub fn create_game(
+        &mut self,
+        game_id: u32,
+        stake_amount: u64,
+        bumps: CreateGameBumps,
+    ) -> Result<()> {
         self.game.set_inner(Game {
             id: game_id,
             stake_amount,
             players: [self.signer.key(), self.opponent.key()],
-            bump: bumps.game, 
+            accepted: false,
+            bump: bumps.game,
         });
         Ok(())
     }

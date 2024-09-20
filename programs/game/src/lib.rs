@@ -17,4 +17,8 @@ pub mod game {
     pub fn create_game(ctx: Context<CreateGame>, game_id: u32, stake_amount: u64) -> Result<()> {
         ctx.accounts.create_game(game_id, stake_amount, ctx.bumps)
     }
+
+    pub fn accept_game(ctx: Context<AcceptGame>, game_id: u32) -> Result<()> {
+        ctx.accounts.accept_game(game_id)
+    }
 }
