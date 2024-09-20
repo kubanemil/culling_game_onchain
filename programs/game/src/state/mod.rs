@@ -1,6 +1,7 @@
+use anchor_lang::prelude::account as pda;
 use anchor_lang::prelude::*;
 
-#[account]
+#[pda]
 pub struct Playerx {
     level: u8,
     owner: Pubkey,
@@ -9,7 +10,7 @@ pub struct Playerx {
     bump: u8,
 }
 
-#[account]
+#[pda]
 pub struct Game {
     id: u32,
     stake_amount: u64,

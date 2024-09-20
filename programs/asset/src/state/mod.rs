@@ -1,3 +1,4 @@
+use anchor_lang::prelude::account as pda;
 use anchor_lang::prelude::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -8,8 +9,9 @@ pub enum Grade {
     Special,
 }
 
-#[account]
+#[pda]
 pub struct Card {
+    pub id: u8,
     pub hp: u8,
     pub grade: u8,
     pub metadata: String,
@@ -19,7 +21,7 @@ pub struct Card {
 //     const INIT_SPACE: usize = 8 + 1 + 1 + 64;
 // }
 
-#[account]
+#[pda]
 pub struct AuthVault {
     pub owner: Pubkey,
     pub bump: u8,
