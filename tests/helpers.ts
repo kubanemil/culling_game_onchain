@@ -23,7 +23,7 @@ export const getVaultMintAddress = async (
 };
 
 export const getLogs = async (
-  program,
+  program: Program<Asset>,
   tx: string
 ): Promise<Array<string> | null> => {
   const txDetails = await program.provider.connection.getTransaction(tx, {

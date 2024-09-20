@@ -74,28 +74,19 @@ describe("asset", async () => {
   it("init", async () => {
     // Add your test here.
     const tx = await program.methods.initialize().rpc();
+    await conn.confirmTransaction(tx, "confirmed");
+    
     const logs = await getLogs(program, tx);
     console.log(logs[10]);
   });
 
-  // it("check mint and cards are created", async () => {
-  //   const [card1] = findPDA(
-  //     [Buffer.from("card"), Buffer.from(new Uint8Array([1])), user.toBuffer()],
-  //     program.programId
-  //   );
-
-  //   const cardInfo = await getMint(conn, card1);
-  //   assert(cardInfo.decimals == 0, "Card is not unit");
-  //   assert(cardInfo.mintAuthority.equals(user), "Wrong owner of the card");
-  //   assert(cardInfo.isInitialized == true, "Mint is not initialized");
-  // });
-
-  it("Buy tokens", async () => {
+  it("buy tokens", async () => {
     const amount = 20_000_000; // is 1 token, as token::decimals = 6
 
     const vaultBalanceBefore = await conn.getBalance(vault);
     // invoke instruction
-    await program.methods.buyToken(new BN(amount)).rpc();
+    const tx = await program.methods.buyToken(new BN(amount)).rpc();
+    await conn.confirmTransaction(tx, "confirmed");
 
     // check balance
     const vaultBalanceAfter = await conn.getBalance(vault);
