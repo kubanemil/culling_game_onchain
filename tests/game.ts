@@ -1,4 +1,4 @@
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program, web3, BN } from "@coral-xyz/anchor";
 import { findPDA, getLogs } from "./helpers";
@@ -30,8 +30,9 @@ describe("game", async () => {
     [Buffer.from("game"), gameIdBuffer, user.toBuffer()],
     program.programId
   );
+  await provider.connection.requestAirdrop(opponent.publicKey, 10*LAMPORTS_PER_SOL)
 
-  it("create a game", async () => {
+  it("create game", async () => {
     // Add your test here.
     const tx = await program.methods
       .createGame(gameId, stakeAmount)
@@ -39,6 +40,19 @@ describe("game", async () => {
         opponent: opponent.publicKey,
         game: gameAddress,
       })
+      .rpc();
+  });
+
+  it("accept game", async () => {
+    // Add your test here.
+    const tx = await program.methods
+      .acceptGame(gameId)
+      .accounts({
+        signer: opponent.publicKey,
+        initiator: user,
+        game: gameAddress,
+      })
+      .signers([opponent])
       .rpc();
   });
 });
