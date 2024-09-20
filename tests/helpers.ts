@@ -1,12 +1,16 @@
 import { web3, Program, Idl } from "@coral-xyz/anchor";
 import { Asset } from "../target/types/asset";
 import { Game } from "../target/types/game";
+import { Connection } from "@solana/web3.js";
 
-const vaultSeedStr = "authVault"
+const vaultSeedStr = "authVault";
 const mintSeedStr = "cullingToken";
 
 export const findPDA = (seeds: Array<Buffer>, programId: web3.PublicKey) =>
   web3.PublicKey.findProgramAddressSync(seeds, programId);
+
+export const getRent = (conn: Connection, size: number) =>
+  conn.getMinimumBalanceForRentExemption(size);
 
 export const getVaultMintAddress = async (
   program: Program<Asset>,

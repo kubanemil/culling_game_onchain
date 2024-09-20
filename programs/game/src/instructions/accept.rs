@@ -29,7 +29,7 @@ impl<'info> Accept<'info> {
         transfer_lamports(
             self.signer.to_account_info(),
             self.game.to_account_info(),
-            self.game.stake_amount.div_ceil(2),
+            self.game.stake_amount,
         )?;
 
         self.game.accepted = true;

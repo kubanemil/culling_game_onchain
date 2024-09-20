@@ -24,7 +24,7 @@ impl<'info> Create<'info> {
         transfer_lamports(
             self.signer.to_account_info(),
             self.game.to_account_info(),
-            stake_lamports.div_ceil(2),
+            stake_lamports,
         )?;
 
         // set the game info
