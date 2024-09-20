@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction(game_id: u32)]
-pub struct ResolveGame<'info> {
+pub struct Resolve<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
@@ -14,8 +14,8 @@ pub struct ResolveGame<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> ResolveGame<'info> {
-    pub fn resolve_game(&mut self, game_id: u32) -> Result<()> {
+impl<'info> Resolve<'info> {
+    pub fn resolve(&mut self, game_id: u32) -> Result<()> {
         msg!("Game id: {}", game_id);
         require!(
             self.game.players[0] == self.signer.key(),

@@ -1,12 +1,8 @@
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program, web3, BN } from "@coral-xyz/anchor";
-import { findPDA, getLogs } from "./helpers";
+import { findPDA } from "./helpers";
 import { Game } from "../target/types/game";
-
-const METAPLEX_PROGRAM_ID = new PublicKey(
-  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-);
 
 describe("game", async () => {
   // Configure the client to use the local cluster.
@@ -30,10 +26,15 @@ describe("game", async () => {
     [Buffer.from("game"), gameIdBuffer, user.toBuffer()],
     program.programId
   );
-  await provider.connection.requestAirdrop(opponent.publicKey, 10*LAMPORTS_PER_SOL)
 
   it("create game", async () => {
-    // Add your test here.
+    // aidrop some lamports to opponent
+    const airdrop_tx = await conn.requestAirdrop(
+      opponent.publicKey,
+      10 * LAMPORTS_PER_SOL
+    );
+    await conn.confirmTransaction(airdrop_tx);
+
     const tx = await program.methods
       .createGame(gameId, stakeAmount)
       .accounts({
@@ -44,7 +45,6 @@ describe("game", async () => {
   });
 
   it("accept game", async () => {
-    // Add your test here.
     const tx = await program.methods
       .acceptGame(gameId)
       .accounts({
@@ -57,11 +57,9 @@ describe("game", async () => {
   });
 
   it("resolve game", async () => {
-    // Add your test here.
     const tx = await program.methods
       .resolveGame(gameId)
       .accounts({
-        signer: opponent.publicKey,
         game: gameAddress,
       })
       .rpc();

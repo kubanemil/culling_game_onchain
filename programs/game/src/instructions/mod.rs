@@ -1,8 +1,8 @@
-pub mod create_game;
-pub use create_game::*;
+pub mod create;
+pub use create::*;
 
-pub mod accept_game;
-pub use accept_game::*;
+pub mod accept;
+pub use accept::*;
 
-pub mod resolve_game;
-pub use resolve_game::*;
+pub mod resolve;
+pub use resolve::*;
