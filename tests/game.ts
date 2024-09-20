@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program, web3, BN } from "@coral-xyz/anchor";
 import { findPDA, getLogs } from "./helpers";
@@ -19,10 +19,26 @@ describe("game", async () => {
 
   anchor.setProvider(provider);
 
+  const opponent = Keypair.generate();
+  const gameId = 923764;
+  const stakeAmount = new BN(10 ** 7);
+
+  const gameIdBuffer = Buffer.alloc(4);
+  gameIdBuffer.writeUInt32LE(gameId, 0);
+
+  const [gameAddress] = findPDA(
+    [Buffer.from("game"), gameIdBuffer, user.toBuffer()],
+    program.programId
+  );
+
   it("create a game", async () => {
     // Add your test here.
-    const tx = await program.methods.createGame().rpc({
-      commitment: "confirmed",
-    });
+    const tx = await program.methods
+      .createGame(gameId, stakeAmount)
+      .accounts({
+        opponent: opponent.publicKey,
+        game: gameAddress,
+      })
+      .rpc();
   });
 });
