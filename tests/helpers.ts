@@ -1,5 +1,6 @@
-import { web3, Program } from "@coral-xyz/anchor";
+import { web3, Program, Idl } from "@coral-xyz/anchor";
 import { Asset } from "../target/types/asset";
+import { Game } from "../target/types/game";
 
 const vaultSeedStr = "authVault"
 const mintSeedStr = "cullingToken";
@@ -22,7 +23,7 @@ export const getVaultMintAddress = async (
 };
 
 export const getLogs = async (
-  program: Program<Asset>,
+  program,
   tx: string
 ): Promise<Array<string> | null> => {
   const txDetails = await program.provider.connection.getTransaction(tx, {

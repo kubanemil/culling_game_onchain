@@ -73,9 +73,7 @@ describe("asset", async () => {
 
   it("init", async () => {
     // Add your test here.
-    const tx = await program.methods.initialize().rpc({
-      commitment: "confirmed",
-    });
+    const tx = await program.methods.initialize().rpc();
     const logs = await getLogs(program, tx);
     console.log(logs[10]);
   });
@@ -97,9 +95,7 @@ describe("asset", async () => {
 
     const vaultBalanceBefore = await conn.getBalance(vault);
     // invoke instruction
-    await program.methods.buyToken(new BN(amount)).rpc({
-      commitment: "confirmed",
-    });
+    await program.methods.buyToken(new BN(amount)).rpc();
 
     // check balance
     const vaultBalanceAfter = await conn.getBalance(vault);

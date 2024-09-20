@@ -14,7 +14,7 @@ declare_id!("5pgzgEQZ18P4w3iTy5dBjv3H4My2GgCM4FxXnHdxSBb7");
 pub mod game {
     use super::*;
 
-    pub fn initialize(ctx: Context<CreateGame>) -> Result<()> {
+    pub fn create_game(ctx: Context<CreateGame>) -> Result<()> {
         ctx.accounts.create_game()
     }
 }
