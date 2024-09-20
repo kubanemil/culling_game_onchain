@@ -21,4 +21,8 @@ pub mod game {
     pub fn accept_game(ctx: Context<AcceptGame>, game_id: u32) -> Result<()> {
         ctx.accounts.accept_game(game_id)
     }
+
+    pub fn resolve_game(ctx: Context<ResolveGame>, game_id: u32) -> Result<()> {
+        ctx.accounts.resolve_game(game_id)
+    }
 }

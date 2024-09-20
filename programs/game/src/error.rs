@@ -4,6 +4,8 @@ use anchor_lang::prelude::*;
 pub enum ErrorCode {
     #[msg("Custom error message")]
     CustomError,
-    #[msg("You are not in the game")]
+    #[msg("You are not game's participant")]
     NotGamePlayer,
+    #[msg("You are not game's creator")]
+    NotGameCreator,
 }

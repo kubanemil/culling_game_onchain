@@ -55,4 +55,15 @@ describe("game", async () => {
       .signers([opponent])
       .rpc();
   });
+
+  it("resolve game", async () => {
+    // Add your test here.
+    const tx = await program.methods
+      .resolveGame(gameId)
+      .accounts({
+        signer: opponent.publicKey,
+        game: gameAddress,
+      })
+      .rpc();
+  });
 });
