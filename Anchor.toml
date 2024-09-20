@@ -6,6 +6,7 @@ skip-lint = false
 
 [programs.localnet]
 asset = "BwDuywJ5NxriMUEJ7EMKFth7joH3W2snbMfQtKp4nwrf"
+game = "5pgzgEQZ18P4w3iTy5dBjv3H4My2GgCM4FxXnHdxSBb7"
 
 [registry]
 url = "https://api.apr.dev"
