@@ -15,7 +15,7 @@ pub struct Accept<'info> {
     #[account(mut, seeds=[b"game", &game_id.to_le_bytes()[..], initiator.key().as_ref()], bump)]
     pub game: Account<'info, Game>,
 
-    #[account(init_if_needed, payer=signer, space=Player::INIT_SPACE, 
+    #[account(init_if_needed, payer=signer, space=Player::INIT_SPACE,
         seeds=[b"player", signer.key().as_ref()], bump)]
     pub player: Account<'info, Player>,
 
