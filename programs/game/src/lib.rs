@@ -1,4 +1,3 @@
-pub mod constants;
 pub mod error;
 pub mod instructions;
 pub mod state;
@@ -6,7 +5,6 @@ pub mod utils;
 
 use anchor_lang::prelude::*;
 
-pub use constants::*;
 pub use instructions::*;
 
 declare_id!("5pgzgEQZ18P4w3iTy5dBjv3H4My2GgCM4FxXnHdxSBb7");
