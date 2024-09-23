@@ -7,6 +7,7 @@ skip-lint = false
 [programs.localnet]
 asset = "BwDuywJ5NxriMUEJ7EMKFth7joH3W2snbMfQtKp4nwrf"
 game = "5pgzgEQZ18P4w3iTy5dBjv3H4My2GgCM4FxXnHdxSBb7"
+governance = "9iEyttWJGvGBApj51JLj8dJP9S3ZWdQB2fv3h7RCfLCB"
 
 [registry]
 url = "https://api.apr.dev"
@@ -17,6 +18,11 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[test]
+startup_wait = 5000
+shutdown_wait = 2000
+upgradeable = false
 
 [[test.genesis]]
 address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
