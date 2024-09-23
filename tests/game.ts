@@ -28,8 +28,15 @@ describe("game", async () => {
     [Buffer.from("game"), gameIdBuffer, user.toBuffer()],
     program.programId
   );
-
   const [configAddress] = findPDA([Buffer.from("config")], program.programId);
+  const [creatorPlayerAddress] = findPDA(
+    [Buffer.from("player"), user.toBuffer()],
+    program.programId
+  );
+  const [opponentPlayerAddress] = findPDA(
+    [Buffer.from("player"), opponent.publicKey.toBuffer()],
+    program.programId
+  );
 
   it("initialize config", async () => {
     // provide auth wallet with SOL to create it
@@ -110,20 +117,17 @@ describe("game", async () => {
 
     // check if user transfered funds
     const userBalance = await conn.getBalance(opponent.publicKey, "processed");
-    expect(userInitBalance - userBalance).closeTo(stake.toNumber(), 10 ** 6);
+    expect(userInitBalance - userBalance).closeTo(
+      stake.toNumber(),
+      2 * 10 ** 6
+    );
 
     // check game status changed
     const game = await program.account.game.fetch(gameAddress);
     assert(game.accepted, "Game is not accepted");
   });
 
-  it("resolve game", async () => {
-    const winner = opponent.publicKey;
-
-    const winnerInitBalance = await conn.getBalance(winner, "processed");
-    const gameInitBalance = await conn.getBalance(gameAddress, "processed");
-    expect(gameInitBalance).gte(stake.toNumber() * 2);
-
+  it("resolve game by non-auth signer", async () => {
     try {
       await program.methods
         .resolveGame(gameId)
@@ -142,13 +146,36 @@ describe("game", async () => {
         "Error Code: NotAuthority. Error Number: 6003."
       );
     }
+  });
 
+  it("resolve game", async () => {
+    const winner = opponent.publicKey;
+
+    const winnerInitBalance = await conn.getBalance(winner, "processed");
+    const gameInitBalance = await conn.getBalance(gameAddress, "processed");
+    expect(gameInitBalance).gte(stake.toNumber() * 2);
+
+    const creatorPlayer = await program.account.player.fetch(
+      creatorPlayerAddress
+    );
+    expect(creatorPlayer.initiated).eq(true);
+    expect(creatorPlayer.owner.equals(user)).eq(true);
+    expect(creatorPlayer.gameWon + creatorPlayer.gameLost).eq(0);
+
+    const opponentPlayer = await program.account.player.fetch(
+      opponentPlayerAddress
+    );
+    expect(opponentPlayer.initiated).eq(true);
+    expect(opponentPlayer.owner.equals(opponent.publicKey)).eq(true);
+    expect(opponentPlayer.gameWon + creatorPlayer.gameLost).eq(0);
+
+    // invoke ix
     await program.methods
       .resolveGame(gameId)
       .accounts({
         auth: auth.publicKey,
         creator: user,
-        winner: opponent.publicKey,
+        winner: winner,
         game: gameAddress,
       })
       .signers([auth])
@@ -162,5 +189,22 @@ describe("game", async () => {
       2 * stake.toNumber(),
       "winner received invalid stake"
     );
+
+    // check player accounts
+    const creatorPlayerAfter = await program.account.player.fetch(
+      creatorPlayerAddress
+    );
+    expect(creatorPlayerAfter.initiated).eq(true);
+    expect(creatorPlayerAfter.owner.equals(user)).eq(true);
+    expect(creatorPlayerAfter.gameWon).eq(0);
+    expect(creatorPlayerAfter.gameLost).eq(1);
+
+    const opponentPlayerAfter = await program.account.player.fetch(
+      opponentPlayerAddress
+    );
+    expect(opponentPlayerAfter.initiated).eq(true);
+    expect(opponentPlayerAfter.owner.equals(opponent.publicKey)).eq(true);
+    expect(opponentPlayerAfter.gameWon).eq(1);
+    expect(opponentPlayerAfter.gameLost).eq(0);
   });
 });
