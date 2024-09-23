@@ -31,7 +31,8 @@ impl<'info> Create<'info> {
         self.game.set_inner(Game {
             id: game_id,
             stake_amount: stake_lamports,
-            players: [self.signer.key(), self.opponent.key()],
+            creator: self.signer.key(),
+            opponent: self.opponent.key(),
             accepted: false,
             bump: bumps.game,
         });

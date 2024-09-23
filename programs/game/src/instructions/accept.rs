@@ -22,7 +22,7 @@ impl<'info> Accept<'info> {
     pub fn accept(&mut self, game_id: u32) -> Result<()> {
         msg!("Game id: {}", game_id);
         require!(
-            self.game.players[1] == self.signer.key(),
+            self.game.opponent == self.signer.key(),
             ErrorCode::NotGamePlayer
         );
 
