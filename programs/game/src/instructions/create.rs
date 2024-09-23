@@ -1,4 +1,4 @@
-use crate::state::Game;
+use crate::state::{Game, Player};
 use crate::utils::transfer_lamports;
 use anchor_lang::prelude::*;
 
@@ -14,6 +14,10 @@ pub struct Create<'info> {
     #[account(init, payer=signer, space=Game::INIT_SPACE,
         seeds=[b"game", &game_id.to_le_bytes()[..], signer.key().as_ref()], bump)]
     pub game: Account<'info, Game>,
+
+    #[account(init_if_needed, payer=signer, space=Player::INIT_SPACE, 
+        seeds=[b"player", signer.key().as_ref()], bump)]
+    pub player: Account<'info, Player>,
 
     pub system_program: Program<'info, System>,
 }
@@ -36,6 +40,15 @@ impl<'info> Create<'info> {
             accepted: false,
             bump: bumps.game,
         });
+
+        if !self.player.initiated {
+            self.player.set_inner(Player {
+                initiated: true,
+                owner: self.signer.key(),
+                game_won: 0,
+                game_lost: 0,
+            });
+        }
         Ok(())
     }
 }

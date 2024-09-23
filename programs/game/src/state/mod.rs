@@ -3,11 +3,14 @@ use anchor_lang::prelude::*;
 
 #[pda]
 pub struct Player {
-    pub level: u8,
+    pub initiated: bool,
     pub owner: Pubkey,
     pub game_won: u32,
     pub game_lost: u32,
-    pub bump: u8,
+}
+
+impl Player {
+    pub const INIT_SPACE: usize = 8 + 32 + (4 * 2) + 1;
 }
 
 #[pda]

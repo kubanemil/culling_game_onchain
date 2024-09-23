@@ -10,4 +10,6 @@ pub enum ErrorCode {
     NotGameCreator,
     #[msg("This instruction should be invoked only by auth")]
     NotAuthority,
+    #[msg("Winner specified not in the game")]
+    InvalidWinner,
 }
