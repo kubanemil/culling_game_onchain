@@ -12,8 +12,13 @@ declare_id!("9iEyttWJGvGBApj51JLj8dJP9S3ZWdQB2fv3h7RCfLCB");
 pub mod governance {
     use super::*;
 
-    pub fn vote(ctx: Context<Vote>) -> Result<()> {
-        ctx.accounts.vote()
+    pub fn vote(
+        ctx: Context<VoteFor>,
+        amendment_id: u32,
+        accept: bool,
+        token_amount: u64,
+    ) -> Result<()> {
+        ctx.accounts.vote_for(amendment_id, accept, token_amount)
     }
 
     pub fn create_amendment(
