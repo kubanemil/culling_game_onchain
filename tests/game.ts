@@ -16,6 +16,7 @@ describe("game", async () => {
 
   anchor.setProvider(provider);
 
+  const auth = Keypair.generate();
   const opponent = Keypair.generate();
   const gameId = 923764;
   const stake = new BN(10 ** 9);
@@ -27,6 +28,30 @@ describe("game", async () => {
     [Buffer.from("game"), gameIdBuffer, user.toBuffer()],
     program.programId
   );
+
+  const [configAddress] = findPDA([Buffer.from("config")], program.programId);
+
+  it("initialize config", async () => {
+    // provide auth wallet with SOL to create it
+    const airdrop_tx = await provider.connection.requestAirdrop(
+      auth.publicKey,
+      1 * LAMPORTS_PER_SOL
+    );
+    await conn.confirmTransaction(airdrop_tx);
+
+    const tx = await program.methods
+      .initConfig()
+      .accounts({
+        auth: auth.publicKey,
+      })
+      .rpc();
+    conn.confirmTransaction(tx, "confirmed");
+
+    // confirm game pda info
+    const game = await program.account.config.fetch(configAddress);
+    assert(game.auth.equals(auth.publicKey), "invalid config auth");
+    assert(game.owner.equals(user), "invalid config owner");
+  });
 
   it("create game", async () => {
     // aidrop some lamports to opponent
@@ -62,12 +87,9 @@ describe("game", async () => {
       stake.toNumber(),
       "invalid game stake"
     );
-    expect(game.accepted).eq(false, "game should not be accepted");
-    expect(game.players[0].equals(user)).eq(true, "invalid game creator");
-    expect(game.players[1].equals(opponent.publicKey)).eq(
-      true,
-      "invalid game opponent"
-    );
+    assert(!game.accepted, "game should not be accepted");
+    assert(game.creator.equals(user), "invalid game creator");
+    assert(game.opponent.equals(opponent.publicKey), "invalid game opponent");
   });
 
   it("accept game", async () => {
@@ -99,11 +121,15 @@ describe("game", async () => {
     const gameInitBalance = await conn.getBalance(gameAddress, "processed");
     expect(gameInitBalance).gte(stake.toNumber() * 2);
 
-    const tx = await program.methods
+    await program.methods
       .resolveGame(gameId)
       .accounts({
+        auth: auth.publicKey,
+        creator: user,
+        winner: opponent.publicKey,
         game: gameAddress,
       })
+      .signers([auth])
       .rpc();
 
     // check if game received a stake

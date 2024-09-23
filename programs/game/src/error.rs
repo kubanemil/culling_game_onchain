@@ -8,4 +8,6 @@ pub enum ErrorCode {
     NotGamePlayer,
     #[msg("You are not game's creator")]
     NotGameCreator,
+    #[msg("This instruction should be invoked only by auth")]
+    NotAuthority,
 }

@@ -15,6 +15,10 @@ declare_id!("5pgzgEQZ18P4w3iTy5dBjv3H4My2GgCM4FxXnHdxSBb7");
 pub mod game {
     use super::*;
 
+    pub fn init_config(ctx: Context<InitConfig>) -> Result<()> {
+        ctx.accounts.init(ctx.bumps)
+    }
+
     pub fn create_game(ctx: Context<Create>, game_id: u32, stake_amount: u64) -> Result<()> {
         ctx.accounts.create(game_id, stake_amount, ctx.bumps)
     }
