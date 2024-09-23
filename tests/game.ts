@@ -1,4 +1,4 @@
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program, web3, BN } from "@coral-xyz/anchor";
 import { findPDA, getRent } from "./helpers";
@@ -9,13 +9,14 @@ describe("game", async () => {
   // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.env();
   const program = anchor.workspace.Game as Program<Game>;
-  const user = provider.publicKey;
   const conn = new web3.Connection(provider.connection.rpcEndpoint, {
     commitment: "confirmed",
   });
 
   anchor.setProvider(provider);
 
+  // test variables
+  const user = provider.publicKey;
   const auth = Keypair.generate();
   const opponent = Keypair.generate();
   const gameId = 923764;
@@ -23,7 +24,6 @@ describe("game", async () => {
 
   const gameIdBuffer = Buffer.alloc(4);
   gameIdBuffer.writeUInt32LE(gameId, 0);
-
   const [gameAddress] = findPDA(
     [Buffer.from("game"), gameIdBuffer, user.toBuffer()],
     program.programId

@@ -1,10 +1,9 @@
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program, web3, BN } from "@coral-xyz/anchor";
 import { findPDA } from "./helpers";
 import { Governance } from "../target/types/governance";
 import { assert, expect } from "chai";
-// import { assert, expect } from "chai";
 
 describe("governance", async () => {
   // Configure the client to use the local cluster.
@@ -19,6 +18,7 @@ describe("governance", async () => {
   // test variables
   const user = provider.publicKey;
   const amendmentId = 7;
+
   const [amendmentAddress] = findPDA(
     [Buffer.from("amendment"), user.toBuffer()],
     program.programId

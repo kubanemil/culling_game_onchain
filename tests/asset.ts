@@ -1,4 +1,3 @@
-import { PublicKey } from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
   getAccount,
@@ -7,54 +6,51 @@ import {
 import * as anchor from "@coral-xyz/anchor";
 import { Program, web3, BN } from "@coral-xyz/anchor";
 import {
-  percentAmount,
   keypairIdentity,
   createSignerFromKeypair,
-  generateSigner,
 } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
   findMetadataPda,
   mplTokenMetadata,
-  createV1,
   TokenStandard,
   fetchDigitalAsset,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { expect, assert } from "chai";
-import { findPDA, getLogs, getVaultMintAddress } from "./helpers";
+import { findPDA, getVaultMintAddress } from "./helpers";
 import { Asset } from "../target/types/asset";
-
-const METAPLEX_PROGRAM_ID = new PublicKey(
-  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-);
 
 describe("asset", async () => {
   // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.env();
   const program = anchor.workspace.Asset as Program<Asset>;
-  const user = provider.publicKey;
   const conn = new web3.Connection(provider.connection.rpcEndpoint, {
     commitment: "confirmed",
   });
 
   const umi = createUmi(conn);
-
   const payer = provider.wallet as NodeWallet;
   const creatorWallet = umi.eddsa.createKeypairFromSecretKey(
     new Uint8Array(payer.payer.secretKey)
   );
-
   const creator = createSignerFromKeypair(umi, creatorWallet);
 
   umi.use(keypairIdentity(creator));
   umi.use(mplTokenMetadata());
-
   anchor.setProvider(provider);
 
-  const [vault, mint_address] = await getVaultMintAddress(program, user);
+  // test variables
+  const user = provider.publicKey;
   const cardId = 7;
+
+  const [vault, mint_address] = await getVaultMintAddress(program, user);
+  const vaultAta = await getAssociatedTokenAddressSync(
+    mint_address,
+    vault,
+    true
+  );
   const [cardAddress] = findPDA(
     [
       Buffer.from("card"),
@@ -65,19 +61,10 @@ describe("asset", async () => {
   );
   const card = fromWeb3JsPublicKey(cardAddress);
 
-  const vaultAta = await getAssociatedTokenAddressSync(
-    mint_address,
-    vault,
-    true
-  );
-
   it("init", async () => {
     // Add your test here.
     const tx = await program.methods.initialize().rpc();
     await conn.confirmTransaction(tx, "confirmed");
-    
-    const logs = await getLogs(program, tx);
-    console.log(logs[10]);
   });
 
   it("buy tokens", async () => {
