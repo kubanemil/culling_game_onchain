@@ -118,8 +118,30 @@ describe("game", async () => {
   });
 
   it("resolve game", async () => {
+    const winner = opponent.publicKey;
+
+    const winnerInitBalance = await conn.getBalance(winner, "processed");
     const gameInitBalance = await conn.getBalance(gameAddress, "processed");
     expect(gameInitBalance).gte(stake.toNumber() * 2);
+
+    try {
+      await program.methods
+        .resolveGame(gameId)
+        .accounts({
+          auth: opponent.publicKey,
+          creator: user,
+          winner: opponent.publicKey,
+          game: gameAddress,
+        })
+        .signers([opponent])
+        .rpc();
+
+      expect.fail("Instruction called by non-auth signer should fail");
+    } catch (e: any) {
+      expect(e.message).contains(
+        "Error Code: NotAuthority. Error Number: 6003."
+      );
+    }
 
     await program.methods
       .resolveGame(gameId)
@@ -132,8 +154,13 @@ describe("game", async () => {
       .signers([auth])
       .rpc();
 
-    // check if game received a stake
+    // check if game transfered a stake to winner
     const gameBalance = await conn.getBalance(gameAddress, "processed");
+    const winnerBalance = await conn.getBalance(winner, "processed");
     expect(gameBalance).eq(0, "Game balance is not drained");
+    expect(winnerBalance - winnerInitBalance).gte(
+      2 * stake.toNumber(),
+      "winner received invalid stake"
+    );
   });
 });
