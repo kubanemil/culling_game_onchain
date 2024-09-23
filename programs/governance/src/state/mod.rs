@@ -6,7 +6,7 @@ pub struct Amendment {
     pub id: u32,
     pub card_id: u8,
     pub new_metadata: Pubkey,
-    pub slot: u128,
+    pub deadline_slot: u128,
 }
 
 impl Amendment {

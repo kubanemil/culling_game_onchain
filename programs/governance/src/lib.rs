@@ -16,8 +16,15 @@ pub mod governance {
         ctx.accounts.vote()
     }
 
-    pub fn create_amendment(ctx: Context<CreateAmendement>) -> Result<()> {
-        ctx.accounts.create()
+    pub fn create_amendment(
+        ctx: Context<CreateAmendement>,
+        amendment_id: u32,
+        card_id: u8,
+        new_metadata: Pubkey,
+        deadline_slot: u128,
+    ) -> Result<()> {
+        ctx.accounts
+            .create(amendment_id, card_id, new_metadata, deadline_slot)
     }
 
     pub fn resolve_amendment(ctx: Context<ResolveAmendment>) -> Result<()> {
