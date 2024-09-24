@@ -22,7 +22,7 @@ pub struct BuyCard<'info> {
     #[account(init_if_needed, payer=signer, associated_token::mint=card, associated_token::authority=signer)]
     pub signer_card_ata: Account<'info, token::TokenAccount>,
 
-    #[account(mut, seeds=[b"authVault", signer.key().as_ref()], bump=vault.bump)]
+    #[account(mut, seeds=[b"authVault"], bump=vault.bump)]
     pub vault: Account<'info, AuthVault>,
 
     #[account(mut, associated_token::mint=mint, associated_token::authority=vault)]

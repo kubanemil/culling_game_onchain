@@ -11,7 +11,7 @@ pub struct Initialize<'info> {
     #[account(init, seeds=[b"cullingToken", vault.key().as_ref()], payer=signer, bump, mint::decimals=6, mint::authority=vault)]
     pub mint: Account<'info, token::Mint>,
 
-    #[account(init, payer=signer, seeds=[b"authVault", signer.key().as_ref()], bump, space=AuthVault::INIT_SPACE)]
+    #[account(init, payer=signer, space=AuthVault::INIT_SPACE, seeds=[b"authVault"], bump)]
     pub vault: Account<'info, AuthVault>,
 
     #[account(init, payer=signer, associated_token::mint=mint, associated_token::authority=vault)]

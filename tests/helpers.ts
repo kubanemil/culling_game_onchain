@@ -1,7 +1,7 @@
 import { web3, Program, Idl } from "@coral-xyz/anchor";
 import { Asset } from "../target/types/asset";
-import { Game } from "../target/types/game";
 import { Connection } from "@solana/web3.js";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 const vaultSeedStr = "authVault";
 const mintSeedStr = "cullingToken";
@@ -9,14 +9,19 @@ const mintSeedStr = "cullingToken";
 export const findPDA = (seeds: Array<Buffer>, programId: web3.PublicKey) =>
   web3.PublicKey.findProgramAddressSync(seeds, programId);
 
+export const getATA = (
+  mint: web3.PublicKey,
+  owner: web3.PublicKey,
+  allowOwnerOffCurve?: boolean
+) => getAssociatedTokenAddressSync(mint, owner, allowOwnerOffCurve);
+
 export const getRent = (conn: Connection, size: number) =>
   conn.getMinimumBalanceForRentExemption(size);
 
 export const getVaultMintAddress = async (
-  program: Program<Asset>,
-  user: web3.PublicKey
+  program: Program<Asset>
 ): Promise<[web3.PublicKey, web3.PublicKey]> => {
-  const vault_seeds = [Buffer.from(vaultSeedStr), user.toBuffer()];
+  const vault_seeds = [Buffer.from(vaultSeedStr)];
   const [vault_address] = findPDA(vault_seeds, program.programId);
 
   // to get mint you need vault address

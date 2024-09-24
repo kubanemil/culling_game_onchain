@@ -19,7 +19,7 @@ pub struct SetMetadata<'info> {
     #[account(mut, seeds=[b"card", &[card_id][..], vault.owner.as_ref()], bump)]
     pub card: Account<'info, token::Mint>,
 
-    #[account(mut, seeds=[b"authVault", signer.key().as_ref()], bump=vault.bump)]
+    #[account(mut, seeds=[b"authVault"], bump=vault.bump)]
     pub vault: Account<'info, AuthVault>,
 
     /// CHECK: New Metaplex Account being created
@@ -81,7 +81,6 @@ impl<'info> SetMetadata<'info> {
 
         let seeds = &[
             "authVault".as_bytes(),
-            self.vault.owner.as_ref(),
             &[self.vault.bump],
         ];
         let vault_seeds = &[seeds.as_slice()];

@@ -1,8 +1,4 @@
-import {
-  getAssociatedTokenAddressSync,
-  getAccount,
-  getMint,
-} from "@solana/spl-token";
+import { getAccount, getMint } from "@solana/spl-token";
 import * as anchor from "@coral-xyz/anchor";
 import { Program, web3, BN } from "@coral-xyz/anchor";
 import {
@@ -19,7 +15,7 @@ import {
 import { fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { expect, assert } from "chai";
-import { findPDA, getVaultMintAddress } from "./helpers";
+import { findPDA, getATA, getVaultMintAddress } from "./helpers";
 import { Asset } from "../target/types/asset";
 
 describe("asset", async () => {
@@ -45,12 +41,8 @@ describe("asset", async () => {
   const user = provider.publicKey;
   const cardId = 7;
 
-  const [vault, mint_address] = await getVaultMintAddress(program, user);
-  const vaultAta = await getAssociatedTokenAddressSync(
-    mint_address,
-    vault,
-    true
-  );
+  const [vault, mint_address] = await getVaultMintAddress(program);
+  const vaultAta = getATA(mint_address, vault, true);
   const [cardAddress] = findPDA(
     [
       Buffer.from("card"),
@@ -86,7 +78,7 @@ describe("asset", async () => {
     assert(mintAccount.supply == BigInt(amount), "Mint supply is invalid");
 
     // check ata
-    const ata_address = await getAssociatedTokenAddressSync(mint_address, user);
+    const ata_address = getATA(mint_address, user);
     const ata = await getAccount(conn, ata_address);
     assert(ata.mint.equals(mint_address), "Wrong ATA mint");
     assert(ata.owner.equals(user), "ATA's owner is invalid.");
@@ -120,7 +112,7 @@ describe("asset", async () => {
     assert(cardInfo.isInitialized == true, "Mint is not initialized");
 
     // check ata
-    const ata_address = await getAssociatedTokenAddressSync(cardAddress, user);
+    const ata_address = getATA(cardAddress, user);
     const ata = await getAccount(conn, ata_address);
     assert(ata.mint.equals(cardAddress), "Wrong ATA mint");
     assert(ata.owner.equals(user), "ATA's owner is invalid.");

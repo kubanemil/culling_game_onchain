@@ -15,7 +15,7 @@ pub struct BuyToken<'info> {
     #[account(init_if_needed, payer=signer, associated_token::mint=mint, associated_token::authority=signer)]
     pub signer_ata: Account<'info, token::TokenAccount>,
 
-    #[account(mut, seeds=[b"authVault", signer.key().as_ref()], bump=vault.bump)]
+    #[account(mut, seeds=[b"authVault"], bump=vault.bump)]
     pub vault: Account<'info, AuthVault>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -48,7 +48,6 @@ impl<'info> BuyToken<'info> {
 
         let seeds = &[
             "authVault".as_bytes(),
-            self.vault.owner.as_ref(),
             &[self.vault.bump],
         ];
         let signer_seeds = &[seeds.as_slice()];
