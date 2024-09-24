@@ -46,10 +46,7 @@ impl<'info> BuyToken<'info> {
             authority: self.vault.to_account_info(),
         };
 
-        let seeds = &[
-            "authVault".as_bytes(),
-            &[self.vault.bump],
-        ];
+        let seeds = &["authVault".as_bytes(), &[self.vault.bump]];
         let signer_seeds = &[seeds.as_slice()];
 
         let ctx = CpiContext::new_with_signer(

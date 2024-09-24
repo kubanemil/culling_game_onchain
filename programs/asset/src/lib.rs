@@ -17,6 +17,10 @@ pub mod asset {
         ctx.accounts.init(ctx.bumps)
     }
 
+    pub fn init_card(ctx: Context<InitCard>, card_id: u8) -> Result<()> {
+        ctx.accounts.init_card(card_id)
+    }
+
     pub fn buy_token(ctx: Context<BuyToken>, amount: u64) -> Result<()> {
         ctx.accounts.buy_token(amount)
     }

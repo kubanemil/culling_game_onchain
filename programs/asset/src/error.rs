@@ -7,4 +7,7 @@ pub enum ErrorCode {
 
     #[msg("No such card id")]
     InvalidCardId,
+
+    #[msg("You are not an owner of vault")]
+    NotOwner,
 }

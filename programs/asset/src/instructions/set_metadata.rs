@@ -44,11 +44,7 @@ impl<'info> SetMetadata<'info> {
     ) -> Result<()> {
         msg!("card ID & address: {} | {}", &card_id, self.card.key());
 
-        let seeds = &[
-            "authVault".as_bytes(),
-            self.vault.owner.as_ref(),
-            &[self.vault.bump],
-        ];
+        let seeds = &["authVault".as_bytes(), &[self.vault.bump]];
         let vault_seeds = &[seeds.as_slice()];
 
         // create metadata for card
@@ -79,10 +75,7 @@ impl<'info> SetMetadata<'info> {
         msg!("card ID & address: {} | {}", &card_id, self.card.key());
         msg!("metadata address: {}", &self.metadata.key());
 
-        let seeds = &[
-            "authVault".as_bytes(),
-            &[self.vault.bump],
-        ];
+        let seeds = &["authVault".as_bytes(), &[self.vault.bump]];
         let vault_seeds = &[seeds.as_slice()];
 
         // use metaplex_program to attach metadata to card

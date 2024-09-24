@@ -13,10 +13,10 @@ pub struct BuyCard<'info> {
     #[account(mut, seeds=[b"cullingToken", vault.key().as_ref()], bump=vault.mint_bump)]
     pub mint: Account<'info, token::Mint>,
 
-    #[account(init_if_needed, seeds=[b"card", &[card_id][..], vault.owner.as_ref()], bump, payer=signer, mint::decimals=0, mint::authority=vault.owner)]
+    #[account(mut, seeds=[b"card", &[card_id][..], vault.owner.as_ref()], bump)]
     pub card: Account<'info, token::Mint>,
 
-    #[account(init_if_needed, payer=signer, associated_token::mint=mint, associated_token::authority=signer)]
+    #[account(mut, associated_token::mint=mint, associated_token::authority=signer)]
     pub signer_ata: Account<'info, token::TokenAccount>,
 
     #[account(init_if_needed, payer=signer, associated_token::mint=card, associated_token::authority=signer)]
