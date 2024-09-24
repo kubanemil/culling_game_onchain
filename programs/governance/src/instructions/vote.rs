@@ -1,10 +1,11 @@
-use crate::constants::{ASSET_PROGRAM_ID, VAULT_ADDRESS};
+use crate::constants::VAULT_ADDRESS;
 use crate::state::Vote;
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken as AssociatedTokenProgram,
     token::{self, Token as TokenProgram, TokenAccount},
 };
+use asset::program::Asset;
 
 #[derive(Accounts)]
 #[instruction(amendment_id: u32)]
@@ -19,17 +20,14 @@ pub struct VoteFor<'info> {
     #[account(mut, seeds=[b"cullingToken", VAULT_ADDRESS.as_ref()], bump)]
     pub mint: Account<'info, token::Mint>,
 
-    #[account(init_if_needed, payer=signer,
+    #[account(init, payer=signer,
         associated_token::mint=mint, associated_token::authority=vote)]
     pub vote_ata: Account<'info, token::TokenAccount>,
 
-    #[account(init_if_needed, payer=signer,
-        associated_token::mint=mint, associated_token::authority=signer)]
+    #[account(mut, associated_token::mint=mint, associated_token::authority=signer)]
     pub signer_ata: Account<'info, TokenAccount>,
 
-    /// CHECK: Our Asset program to get game tokens
-    #[account(address=ASSET_PROGRAM_ID)]
-    pub asset_program: UncheckedAccount<'info>,
+    pub asset_program: Program<'info, Asset>,
     pub associated_token_program: Program<'info, AssociatedTokenProgram>,
     pub token_program: Program<'info, TokenProgram>,
     pub system_program: Program<'info, System>,
