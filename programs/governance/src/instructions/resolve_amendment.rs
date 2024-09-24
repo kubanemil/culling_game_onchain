@@ -16,8 +16,7 @@ pub struct ResolveAmendment<'info> {
     #[account(mut, seeds=[b"amendment", signer.key().as_ref()], bump)]
     pub amendment: Account<'info, Amendment>,
 
-    #[account(mut, seeds=[b"card", &[amendment.card_id][..], vault.owner.as_ref()], 
-        bump, owner=asset_program.key())]
+    #[account(mut)]
     pub card: Account<'info, token::Mint>,
 
     #[account(mut)]
@@ -41,7 +40,7 @@ impl<'info> ResolveAmendment<'info> {
         msg!("Greetings from: {:?}", self.signer.key);
         require!(
             Clock::get()?.slot > self.amendment.deadline_slot,
-            ErrorCode::CustomError
+            ErrorCode::ResolveBeforeDeadline
         );
 
         if self.amendment.pros > self.amendment.cons {

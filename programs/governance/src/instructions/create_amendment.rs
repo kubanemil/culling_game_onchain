@@ -21,8 +21,10 @@ impl<'info> CreateAmendement<'info> {
         new_metadata_uri: String,
         deadline_slot: u64,
     ) -> Result<()> {
-        msg!("Greetings from: {:?}", self.signer.key);
-        require!(Clock::get()?.slot < deadline_slot, ErrorCode::CustomError);
+        require!(
+            Clock::get()?.slot < deadline_slot,
+            ErrorCode::VoteAfterDeadline
+        );
 
         self.amendment.set_inner(Amendment {
             creator: self.signer.key(),
