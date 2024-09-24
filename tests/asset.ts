@@ -54,9 +54,36 @@ describe("asset", async () => {
   const card = fromWeb3JsPublicKey(cardAddress);
 
   it("init", async () => {
-    // Add your test here.
-    const tx = await program.methods.initialize().rpc();
-    await conn.confirmTransaction(tx, "confirmed");
+    // init asset vault
+    const init_tx = await program.methods.initialize().rpc();
+    await conn.confirmTransaction(init_tx, "confirmed");
+
+    // create cards
+    for (let i = 0; i < 10; i++) {
+      const [cardAddress] = findPDA(
+        [
+          Buffer.from("card"),
+          Buffer.from(new Uint8Array([i])),
+          user.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const card_tx = await program.methods
+        .initCard(i)
+        .accounts({
+          card: cardAddress,
+        })
+        .rpc();
+      await conn.confirmTransaction(card_tx, "confirmed");
+
+      const cardAccount = await getMint(conn, cardAddress);
+      assert(cardAccount.decimals == 0, "Card has wrong decimals");
+      assert(
+        cardAccount.mintAuthority.equals(user),
+        "Wrong card mint authority"
+      );
+    }
   });
 
   it("buy tokens", async () => {
