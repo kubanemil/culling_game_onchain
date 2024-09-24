@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::state::Amendment;
+use crate::{error::ErrorCode, state::Amendment};
 
 #[derive(Accounts)]
 pub struct CreateAmendement<'info> {
@@ -17,18 +17,20 @@ pub struct CreateAmendement<'info> {
 impl<'info> CreateAmendement<'info> {
     pub fn create(
         &mut self,
-        amendment_id: u32,
         card_id: u8,
-        new_metadata: Pubkey,
-        deadline_slot: u128,
+        new_metadata_uri: String,
+        deadline_slot: u64,
     ) -> Result<()> {
         msg!("Greetings from: {:?}", self.signer.key);
+        require!(Clock::get()?.slot < deadline_slot, ErrorCode::CustomError);
 
         self.amendment.set_inner(Amendment {
-            id: amendment_id,
+            creator: self.signer.key(),
             card_id,
-            new_metadata,
+            new_metadata_uri,
             deadline_slot,
+            pros: 0,
+            cons: 0,
         });
         Ok(())
     }

@@ -3,24 +3,26 @@ use anchor_lang::prelude::*;
 
 #[pda]
 pub struct Amendment {
-    pub id: u32,
+    pub creator: Pubkey,
     pub card_id: u8,
-    pub new_metadata: Pubkey,
-    pub deadline_slot: u128,
+    pub new_metadata_uri: String,
+    pub deadline_slot: u64,
+    pub pros: u64,
+    pub cons: u64,
 }
 
 impl Amendment {
-    pub const INIT_SPACE: usize = 8 + 4 + 1 + 32 + 16;
+    pub const INIT_SPACE: usize = 8 + 32 + 1 + 32 + (3 * 8);
 }
 
 #[pda]
 pub struct Vote {
     pub voter: Pubkey,
-    pub amendment_id: u32,
+    pub amendment: Pubkey,
     pub accept: bool,
     pub tokens: u64,
 }
 
 impl Vote {
-    pub const INIT_SPACE: usize = 8 + 32 + 4 + 1 + 8;
+    pub const INIT_SPACE: usize = 8 + 32 + 32 + 1 + 8;
 }

@@ -6,7 +6,6 @@ import { Governance } from "../target/types/governance";
 import { assert, expect } from "chai";
 import { Asset } from "../target/types/asset";
 import { getAccount, getMint } from "@solana/spl-token";
-import { token } from "@coral-xyz/anchor/dist/cjs/utils";
 
 describe("governance", async () => {
   // Configure the client to use the local cluster.
@@ -23,15 +22,13 @@ describe("governance", async () => {
   const user = provider.publicKey;
   const amendmentId = 7;
 
-  const [amendmentAddress] = findPDA(
+  const [amendment] = findPDA(
     [Buffer.from("amendment"), user.toBuffer()],
     program.programId
   );
 
-  const amendmentIdBuffer = Buffer.alloc(4);
-  amendmentIdBuffer.writeUInt32LE(amendmentId, 0);
   const [voteAddress] = await findPDA(
-    [Buffer.from("vote"), user.toBuffer(), amendmentIdBuffer],
+    [Buffer.from("vote"), amendment.toBuffer()],
     program.programId
   );
   const [vault, mint_address] = await getVaultMintAddress(asset_program);
@@ -42,11 +39,12 @@ describe("governance", async () => {
     const deadlineSlot = new BN(10);
 
     await program.methods
-      .createAmendment(amendmentId, cardId, newMetadata.publicKey, deadlineSlot)
+      .createAmendment(cardId, newMetadata.publicKey, deadlineSlot)
+      .accounts({})
       .rpc();
 
-    const amend = await program.account.amendment.fetch(amendmentAddress);
-    expect(amend.id).eq(amendmentId, "invalid amendment ID");
+    const amend = await program.account.amendment.fetch(amendment);
+    expect(amend.creator.equals(user)).eq(true, "invalid amendment ID");
     expect(amend.cardId).eq(cardId, "invalid cardId");
     assert(amend.newMetadata.equals(newMetadata.publicKey), "invalid metadata");
     assert(amend.deadlineSlot.eq(deadlineSlot), "invalid deadline");
@@ -67,10 +65,10 @@ describe("governance", async () => {
     const tokenAmount = new BN(10 ** 6);
 
     const tx = await program.methods
-      .vote(amendmentId, true, tokenAmount)
+      .vote(true, tokenAmount)
       .accounts({
-        vote: voteAddress,
         mint: mint_address,
+        amendment: amendment,
       })
       .rpc();
     await conn.confirmTransaction(tx, "confirmed");
@@ -78,7 +76,7 @@ describe("governance", async () => {
     // check if vote PDA is created properly
     const vote = await program.account.vote.fetch(voteAddress);
     expect(vote.voter.equals(user)).eq(true, "invalid voter");
-    expect(vote.amendmentId).eq(amendmentId, "invalid amendment");
+    expect(vote.amendment.equals(amendment)).eq(true, "invalid amendment");
     expect(vote.accept).eq(true, "vote should be accepted");
     expect(vote.tokens.eq(tokenAmount)).eq(true, "invalid token amount");
 

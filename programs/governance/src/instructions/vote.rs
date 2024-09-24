@@ -1,4 +1,5 @@
-use crate::state::Vote;
+use crate::error::ErrorCode;
+use crate::state::{Amendment, Vote};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken as AssociatedTokenProgram,
@@ -18,8 +19,11 @@ pub struct VoteFor<'info> {
     #[account(mut, associated_token::mint=mint, associated_token::authority=signer)]
     pub signer_ata: Account<'info, TokenAccount>,
 
+    #[account(mut)]
+    pub amendment: Account<'info, Amendment>,
+
     #[account(init, payer=signer, space=Vote::INIT_SPACE,
-        seeds=[b"vote", signer.key().as_ref(), &amendment_id.to_le_bytes()[..]], bump)]
+        seeds=[b"vote", amendment.key().as_ref()], bump)]
     pub vote: Account<'info, Vote>,
 
     #[account(init, payer=signer,
@@ -33,16 +37,26 @@ pub struct VoteFor<'info> {
 }
 
 impl<'info> VoteFor<'info> {
-    pub fn vote_for(&mut self, amendment_id: u32, accept: bool, tokens: u64) -> Result<()> {
-        msg!("Voting for amendment with id: {:?}", amendment_id);
+    pub fn vote_for(&mut self, accept: bool, tokens: u64) -> Result<()> {
+        msg!("Voting for amendment with id: {:?}", self.amendment.key());
+        require!(
+            Clock::get()?.slot < self.amendment.deadline_slot,
+            ErrorCode::CustomError
+        );
         self.transfer_tokens(tokens)?;
 
         self.vote.set_inner(Vote {
             voter: self.signer.key(),
-            amendment_id,
+            amendment: self.amendment.key(),
             accept,
             tokens,
         });
+
+        match accept {
+            true => self.amendment.pros += tokens,
+            false => self.amendment.cons += tokens,
+        };
+
         Ok(())
     }
 
