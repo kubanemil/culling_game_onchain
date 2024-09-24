@@ -30,7 +30,7 @@ pub mod asset {
     }
 
     pub fn create_metadata(
-        ctx: Context<SetMetadata>,
+        ctx: Context<CreateMetadata>,
         card_id: u8,
         name: String,
         symbol: String,
@@ -40,12 +40,20 @@ pub mod asset {
     }
 
     pub fn update_metadata(
-        ctx: Context<SetMetadata>,
+        ctx: Context<UpdateMetadata>,
         card_id: u8,
         name: String,
         symbol: String,
         uri: String,
     ) -> Result<()> {
         ctx.accounts.update_metadata(card_id, name, symbol, uri)
+    }
+
+    pub fn update_metadata_uri(
+        ctx: Context<UpdateMetadata>,
+        card_id: u8,
+        uri: String,
+    ) -> Result<()> {
+        ctx.accounts.update_uri(card_id, uri)
     }
 }
