@@ -54,10 +54,17 @@ impl<'info> BuyCard<'info> {
         let mint_accounts = token::MintTo {
             mint: self.card.to_account_info(),
             to: self.signer_card_ata.to_account_info(),
-            authority: self.signer.to_account_info(),
+            authority: self.vault.to_account_info(),
         };
 
-        let ctx = CpiContext::new(self.token_program.to_account_info(), mint_accounts);
+        let seeds = &["authVault".as_bytes(), &[self.vault.bump]];
+        let signer_seeds = &[seeds.as_slice()];
+
+        let ctx = CpiContext::new_with_signer(
+            self.token_program.to_account_info(),
+            mint_accounts,
+            signer_seeds,
+        );
         token::mint_to(ctx, 1)
     }
 }

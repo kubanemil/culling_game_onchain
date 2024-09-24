@@ -9,7 +9,7 @@ pub struct InitCard<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    #[account(init, payer=signer,mint::decimals=0, mint::authority=vault.owner,
+    #[account(init, payer=signer,mint::decimals=0, mint::authority=vault.key(),
         seeds=[b"card", &[card_id][..], vault.owner.as_ref()], bump)]
     pub card: Account<'info, token::Mint>,
 

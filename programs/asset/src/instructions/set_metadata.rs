@@ -55,7 +55,7 @@ impl<'info> SetMetadata<'info> {
             .symbol(symbol)
             .seller_fee_basis_points(0)
             .mint(&self.card.to_account_info(), false)
-            .authority(&self.signer.to_account_info())
+            .authority(&self.vault.to_account_info())
             .update_authority(&self.vault.to_account_info(), true)
             .token_standard(TokenStandard::FungibleAsset)
             .system_program(&self.system_program.to_account_info())

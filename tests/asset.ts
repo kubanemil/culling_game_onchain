@@ -80,7 +80,7 @@ describe("asset", async () => {
       const cardAccount = await getMint(conn, cardAddress);
       assert(cardAccount.decimals == 0, "Card has wrong decimals");
       assert(
-        cardAccount.mintAuthority.equals(user),
+        cardAccount.mintAuthority.equals(vault),
         "Wrong card mint authority"
       );
     }
@@ -135,7 +135,7 @@ describe("asset", async () => {
     // check card
     const cardInfo = await getMint(conn, cardAddress);
     assert(cardInfo.decimals == 0, "Card is not unit");
-    assert(cardInfo.mintAuthority.equals(user), "Wrong owner of the card");
+    assert(cardInfo.mintAuthority.equals(vault), "Wrong owner of the card");
     assert(cardInfo.isInitialized == true, "Mint is not initialized");
 
     // check ata
