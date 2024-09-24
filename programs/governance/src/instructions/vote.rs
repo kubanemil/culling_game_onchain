@@ -1,4 +1,3 @@
-use crate::constants::VAULT_ADDRESS;
 use crate::state::Vote;
 use anchor_lang::prelude::*;
 use anchor_spl::{
@@ -13,19 +12,19 @@ pub struct VoteFor<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
+    #[account(mut)]
+    pub mint: Account<'info, token::Mint>,
+
+    #[account(mut, associated_token::mint=mint, associated_token::authority=signer)]
+    pub signer_ata: Account<'info, TokenAccount>,
+
     #[account(init, payer=signer, space=Vote::INIT_SPACE,
         seeds=[b"vote", signer.key().as_ref(), &amendment_id.to_le_bytes()[..]], bump)]
     pub vote: Account<'info, Vote>,
 
-    #[account(mut, seeds=[b"cullingToken", VAULT_ADDRESS.as_ref()], bump)]
-    pub mint: Account<'info, token::Mint>,
-
     #[account(init, payer=signer,
         associated_token::mint=mint, associated_token::authority=vote)]
     pub vote_ata: Account<'info, token::TokenAccount>,
-
-    #[account(mut, associated_token::mint=mint, associated_token::authority=signer)]
-    pub signer_ata: Account<'info, TokenAccount>,
 
     pub asset_program: Program<'info, Asset>,
     pub associated_token_program: Program<'info, AssociatedTokenProgram>,
@@ -36,7 +35,6 @@ pub struct VoteFor<'info> {
 impl<'info> VoteFor<'info> {
     pub fn vote_for(&mut self, amendment_id: u32, accept: bool, tokens: u64) -> Result<()> {
         msg!("Voting for amendment with id: {:?}", amendment_id);
-
         self.transfer_tokens(tokens)?;
 
         self.vote.set_inner(Vote {
@@ -45,7 +43,6 @@ impl<'info> VoteFor<'info> {
             accept,
             tokens,
         });
-
         Ok(())
     }
 
