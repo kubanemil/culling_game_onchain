@@ -4,12 +4,18 @@ use ::duel::{
     fight::{fight, Outcome},
     randomness, Duel, DuelStatus, MIN_STAKE, REVEAL_WINDOW,
 };
-use anchor_lang::{error::ErrorCode, prelude::Pubkey, Space};
+use anchor_lang::{
+    error::ErrorCode,
+    prelude::Pubkey,
+    solana_program::{system_instruction, system_program},
+    Space,
+};
+use anchor_spl::token_2022::spl_token_2022;
 use solana_keypair::Keypair;
 use solana_signer::Signer;
 
 use crate::{
-    harness::{expect_error, TxResult},
+    harness::{ata, create_ata_ix, expect_error, expect_log, TxResult},
     ix,
     world::{World, BRUTE, GUARD, TOKEN},
 };
@@ -24,7 +30,6 @@ struct Table {
     creator: Keypair,
     opponent: Keypair,
     stranger: Keypair,
-    cranker: Keypair,
     duel: Pubkey,
     creator_secret: [u8; 32],
     opponent_secret: [u8; 32],
@@ -40,14 +45,12 @@ impl Table {
         world.buy_card(&creator, 0);
         world.buy_card(&opponent, 1);
         world.buy_card(&stranger, 2);
-        let cranker = world.env.user();
         let duel = ix::duel::address(&creator.pubkey(), NONCE);
         Self {
             world,
             creator,
             opponent,
             stranger,
-            cranker,
             duel,
             creator_secret: [1; 32],
             opponent_secret: [2; 32],
@@ -94,25 +97,34 @@ impl Table {
         self.reveal_as(&opponent, 1, self.opponent_secret)
     }
 
-    fn settle_with(&mut self, opponent: &Pubkey) -> TxResult {
-        let ix = ix::duel::settle(&self.duel, &self.creator.pubkey(), opponent);
-        self.world.env.send(&[ix], &[&self.cranker])
+    fn claim_as(&mut self, player: &Keypair, revealed: Option<usize>) -> TxResult {
+        let card = revealed.map(|index| self.card(index));
+        let ix = ix::duel::claim(&player.pubkey(), &self.duel, card.as_ref());
+        self.world.env.send(&[ix], &[player])
     }
 
-    fn settle(&mut self) -> TxResult {
-        let opponent = self.opponent.pubkey();
-        self.settle_with(&opponent)
+    /// Claims and returns how many lamports the player gained, fee included.
+    fn claim_gain(&mut self, player: &Keypair, revealed: Option<usize>) -> i128 {
+        let before = self.world.env.lamports(&player.pubkey()) as i128;
+        self.claim_as(player, revealed).unwrap();
+        self.world.env.lamports(&player.pubkey()) as i128 - before
     }
 
     fn state(&self) -> Duel {
         self.world.env.account(&self.duel)
     }
 
-    fn balances(&self) -> (u64, u64) {
-        (
-            self.world.env.lamports(&self.creator.pubkey()),
-            self.world.env.lamports(&self.opponent.pubkey()),
-        )
+    fn escrow_rent(&self) -> u64 {
+        self.world
+            .env
+            .lamports(&ix::duel::escrow(&self.duel, &self.creator.pubkey()))
+    }
+
+    fn duel_rent(&self) -> u64 {
+        self.world
+            .env
+            .svm
+            .minimum_balance_for_rent_exemption(8 + Duel::INIT_SPACE)
     }
 
     fn warp_past_deadline(&mut self) {
@@ -121,38 +133,66 @@ impl Table {
     }
 }
 
+fn payouts(outcome: Outcome) -> (i128, i128) {
+    let stake = STAKE as i128;
+    match outcome {
+        Outcome::CreatorWins => (2 * stake, 0),
+        Outcome::OpponentWins => (0, 2 * stake),
+        Outcome::Draw => (stake, stake),
+    }
+}
+
 #[test]
-fn a_full_duel_pays_the_winner_from_the_pda_and_closes_it() {
+fn a_full_duel_pays_each_side_its_share_and_returns_the_cards() {
     let mut t = Table::new();
     t.create(None).unwrap();
     t.accept().unwrap();
     let duel = t.state();
     assert_eq!(duel.status, DuelStatus::Accepted);
-    assert_eq!(duel.opponent, Some(t.opponent.pubkey()));
     assert_eq!(duel.reveal_deadline, t.world.env.now() + REVEAL_WINDOW);
 
     t.reveal_creator().unwrap();
     t.reveal_opponent().unwrap();
+    assert_eq!(
+        t.world
+            .env
+            .token_balance(&ata(&t.creator.pubkey(), &t.card(0))),
+        0
+    );
 
-    let rent = t.world.env.lamports(&t.duel) - 2 * STAKE;
-    let (creator_before, opponent_before) = t.balances();
     let seed = randomness(&t.duel, &t.creator_secret, &t.opponent_secret);
-    let outcome = fight(&BRUTE, &GUARD, &seed);
-    t.settle().unwrap();
+    let (creator_share, opponent_share) = payouts(fight(&BRUTE, &GUARD, &seed));
+    let escrow_rent = t.escrow_rent() as i128;
+    let duel_rent = t.duel_rent() as i128;
+    let opponent = t.opponent.insecure_clone();
+    let creator = t.creator.insecure_clone();
 
-    let (creator_after, opponent_after) = t.balances();
-    let (creator_gain, opponent_gain) = match outcome {
-        Outcome::CreatorWins => (2 * STAKE + rent, 0),
-        Outcome::OpponentWins => (rent, 2 * STAKE),
-        Outcome::Draw => (STAKE + rent, STAKE),
-    };
-    assert_eq!(creator_after - creator_before, creator_gain);
-    assert_eq!(opponent_after - opponent_before, opponent_gain);
+    assert_eq!(
+        t.claim_gain(&opponent, Some(1)),
+        opponent_share + escrow_rent - FEE as i128
+    );
+    assert!(t.world.env.exists(&t.duel));
+    assert_eq!(
+        t.claim_gain(&creator, Some(0)),
+        creator_share + escrow_rent + duel_rent - FEE as i128
+    );
     assert!(!t.world.env.exists(&t.duel));
+    assert_eq!(
+        t.world
+            .env
+            .token_balance(&ata(&creator.pubkey(), &t.card(0))),
+        1
+    );
+    assert_eq!(
+        t.world
+            .env
+            .token_balance(&ata(&opponent.pubkey(), &t.card(1))),
+        1
+    );
 }
 
 #[test]
-fn a_draw_refunds_both_stakes() {
+fn a_mirror_match_draw_refunds_both_stakes() {
     let mut t = Table::new();
     let creator = t.creator.insecure_clone();
     let opponent = t.opponent.insecure_clone();
@@ -175,12 +215,16 @@ fn a_draw_refunds_both_stakes() {
     t.reveal_as(&creator, 0, t.creator_secret).unwrap();
     t.reveal_as(&opponent, 0, secret).unwrap();
 
-    let rent = t.world.env.lamports(&t.duel) - 2 * STAKE;
-    let (creator_before, opponent_before) = t.balances();
-    t.settle().unwrap();
-    let (creator_after, opponent_after) = t.balances();
-    assert_eq!(creator_after - creator_before, STAKE + rent);
-    assert_eq!(opponent_after - opponent_before, STAKE);
+    let escrow_rent = t.escrow_rent() as i128;
+    let duel_rent = t.duel_rent() as i128;
+    assert_eq!(
+        t.claim_gain(&opponent, Some(0)),
+        STAKE as i128 + escrow_rent - FEE as i128
+    );
+    assert_eq!(
+        t.claim_gain(&creator, Some(0)),
+        STAKE as i128 + escrow_rent + duel_rent - FEE as i128
+    );
 }
 
 #[test]
@@ -192,11 +236,7 @@ fn attack_accept_cannot_be_called_twice() {
     let stranger = t.stranger.insecure_clone();
     expect_error(t.accept_as(&stranger, 2), DuelError::NotOpen);
     expect_error(t.accept(), DuelError::NotOpen);
-    let rent = t
-        .world
-        .env
-        .svm
-        .minimum_balance_for_rent_exemption(8 + Duel::INIT_SPACE);
+    let rent = t.duel_rent();
     assert_eq!(t.world.env.lamports(&t.duel), 2 * STAKE + rent);
 }
 
@@ -279,7 +319,7 @@ fn attack_a_wrong_secret_or_card_does_not_match_the_commitment() {
         DuelError::CommitmentMismatch,
     );
     t.reveal_creator().unwrap();
-    expect_error(t.reveal_creator(), DuelError::AlreadyRevealed);
+    expect_log(t.reveal_creator(), "already in use");
 }
 
 #[test]
@@ -298,6 +338,78 @@ fn attack_a_player_cannot_reveal_a_card_they_no_longer_hold() {
 }
 
 #[test]
+fn attack_one_card_cannot_back_two_reveals_at_once() {
+    let mut t = Table::new();
+    let creator = t.creator.insecure_clone();
+    let stranger = t.stranger.insecure_clone();
+    let first = t.duel;
+    let second = ix::duel::address(&creator.pubkey(), NONCE + 1);
+
+    t.create(None).unwrap();
+    t.accept().unwrap();
+    t.duel = second;
+    let commitment = t.commit(&creator, 0, t.creator_secret);
+    t.world.env.ok(
+        &[ix::duel::create(
+            &creator.pubkey(),
+            NONCE + 1,
+            STAKE,
+            commitment,
+            None,
+        )],
+        &[&creator],
+    );
+    t.accept_as(&stranger, 2).unwrap();
+
+    t.duel = first;
+    t.reveal_creator().unwrap();
+    assert_eq!(
+        t.world
+            .env
+            .token_balance(&ix::duel::escrow(&first, &creator.pubkey())),
+        1
+    );
+
+    t.duel = second;
+    expect_error(t.reveal_creator(), DuelError::CardNotOwned);
+}
+
+#[test]
+fn attack_a_card_borrowed_for_one_transaction_cannot_be_handed_back_in_it() {
+    let mut t = Table::new();
+    let opponent = t.opponent.insecure_clone();
+    let lender = t.stranger.insecure_clone();
+    let glass = t.card(2);
+    t.create(None).unwrap();
+    t.accept_as(&opponent, 2).unwrap();
+
+    let transfer = |from: &Pubkey, to: &Pubkey| {
+        spl_token_2022::instruction::transfer_checked(
+            &spl_token_2022::ID,
+            &ata(from, &glass),
+            &glass,
+            &ata(to, &glass),
+            from,
+            &[],
+            1,
+            0,
+        )
+        .unwrap()
+    };
+    let ixs = [
+        create_ata_ix(&opponent.pubkey(), &opponent.pubkey(), &glass),
+        transfer(&lender.pubkey(), &opponent.pubkey()),
+        ix::duel::reveal(&opponent.pubkey(), &t.duel, &glass, t.opponent_secret),
+        transfer(&opponent.pubkey(), &lender.pubkey()),
+    ];
+    expect_log(
+        t.world.env.send(&ixs, &[&opponent, &lender]),
+        "insufficient funds",
+    );
+    assert_eq!(t.world.env.token_balance(&ata(&lender.pubkey(), &glass)), 1);
+}
+
+#[test]
 fn attack_a_stranger_cannot_reveal_in_someone_elses_duel() {
     let mut t = Table::new();
     t.create(None).unwrap();
@@ -309,48 +421,103 @@ fn attack_a_stranger_cannot_reveal_in_someone_elses_duel() {
 #[test]
 fn attack_a_non_revealing_player_forfeits_after_timeout() {
     let mut t = Table::new();
+    let creator = t.creator.insecure_clone();
+    let opponent = t.opponent.insecure_clone();
     t.create(None).unwrap();
     t.accept().unwrap();
     t.reveal_creator().unwrap();
 
-    expect_error(t.settle(), DuelError::RevealWindowOpen);
+    expect_error(t.claim_as(&creator, Some(0)), DuelError::RevealWindowOpen);
 
     t.warp_past_deadline();
     expect_error(t.reveal_opponent(), DuelError::RevealWindowClosed);
 
-    let rent = t.world.env.lamports(&t.duel) - 2 * STAKE;
-    let (creator_before, opponent_before) = t.balances();
-    t.settle().unwrap();
-    let (creator_after, opponent_after) = t.balances();
-    assert_eq!(creator_after - creator_before, 2 * STAKE + rent);
-    assert_eq!(opponent_after, opponent_before);
+    let escrow_rent = t.escrow_rent() as i128;
+    let duel_rent = t.duel_rent() as i128;
+    assert_eq!(
+        t.claim_gain(&creator, Some(0)),
+        2 * STAKE as i128 + escrow_rent + duel_rent - FEE as i128
+    );
+    assert!(!t.world.env.exists(&t.duel));
+    expect_error(
+        t.claim_as(&opponent, None),
+        ErrorCode::AccountNotInitialized,
+    );
 }
 
 #[test]
 fn if_nobody_reveals_both_stakes_are_refunded_after_timeout() {
     let mut t = Table::new();
+    let creator = t.creator.insecure_clone();
+    let opponent = t.opponent.insecure_clone();
     t.create(None).unwrap();
     t.accept().unwrap();
     t.warp_past_deadline();
 
-    let rent = t.world.env.lamports(&t.duel) - 2 * STAKE;
-    let (creator_before, opponent_before) = t.balances();
-    t.settle().unwrap();
-    let (creator_after, opponent_after) = t.balances();
-    assert_eq!(creator_after - creator_before, STAKE + rent);
-    assert_eq!(opponent_after - opponent_before, STAKE);
+    let duel_rent = t.duel_rent() as i128;
+    assert_eq!(t.claim_gain(&creator, None), STAKE as i128 - FEE as i128);
+    assert!(t.world.env.exists(&t.duel));
+    assert_eq!(t.claim_gain(&opponent, None), STAKE as i128 - FEE as i128);
+    assert_eq!(t.claim_gain(&creator, None), duel_rent - FEE as i128);
+    assert!(!t.world.env.exists(&t.duel));
 }
 
 #[test]
-fn attack_settle_rejects_a_swapped_payout_account() {
+fn attack_a_loser_cannot_lock_the_pot_by_reassigning_their_wallet() {
     let mut t = Table::new();
-    t.create(None).unwrap();
-    expect_error(t.settle(), DuelError::NotAccepted);
+    let creator = t.creator.insecure_clone();
+    let opponent = t.opponent.insecure_clone();
+    t.opponent_secret = (0u32..)
+        .map(|i| {
+            let mut s = [4; 32];
+            s[..4].copy_from_slice(&i.to_le_bytes());
+            s
+        })
+        .find(|s| {
+            let seed = randomness(&t.duel, &t.creator_secret, s);
+            fight(&BRUTE, &GUARD, &seed) == Outcome::OpponentWins
+        })
+        .unwrap();
 
+    t.create(None).unwrap();
     t.accept().unwrap();
     t.reveal_creator().unwrap();
     t.reveal_opponent().unwrap();
-    let stranger = t.stranger.pubkey();
-    expect_error(t.settle_with(&stranger), DuelError::NotAPlayer);
-    t.settle().unwrap();
+
+    // The losing creator hands their wallet to another program, which used to make any
+    // payment or close into it fail.
+    t.world.env.ok(
+        &[system_instruction::assign(&creator.pubkey(), &::asset::ID)],
+        &[&creator],
+    );
+    assert_ne!(
+        t.world
+            .env
+            .svm
+            .get_account(&creator.pubkey())
+            .unwrap()
+            .owner,
+        system_program::ID
+    );
+
+    let escrow_rent = t.escrow_rent() as i128;
+    assert_eq!(
+        t.claim_gain(&opponent, Some(1)),
+        2 * STAKE as i128 + escrow_rent - FEE as i128
+    );
+}
+
+#[test]
+fn attack_strangers_cannot_claim_and_players_cannot_claim_twice() {
+    let mut t = Table::new();
+    let opponent = t.opponent.insecure_clone();
+    let stranger = t.stranger.insecure_clone();
+    t.create(None).unwrap();
+    expect_error(t.claim_as(&opponent, None), DuelError::NotAccepted);
+
+    t.accept().unwrap();
+    t.warp_past_deadline();
+    expect_error(t.claim_as(&stranger, None), DuelError::NotAPlayer);
+    t.claim_as(&opponent, None).unwrap();
+    expect_error(t.claim_as(&opponent, None), DuelError::AlreadyClaimed);
 }

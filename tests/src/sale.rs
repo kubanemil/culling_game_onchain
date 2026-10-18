@@ -2,11 +2,17 @@ use std::slice;
 
 use ::sale::{error::SaleError, merkle, Allocation, Config, Round, RoundArgs, TOKEN_MINT};
 use anchor_lang::prelude::Pubkey;
+use anchor_spl::{
+    token_2022::spl_token_2022,
+    token_interface::spl_token_metadata_interface::{
+        error::TokenMetadataError, instruction::update_field, state::Field,
+    },
+};
 use solana_keypair::Keypair;
 use solana_signer::Signer;
 
 use crate::{
-    harness::{expect_error, Env, TxResult},
+    harness::{expect_error, expect_log, Env, TxResult},
     ix,
     world::{sale_args, World, DECIMALS, PRICE, SUPPLY_CAP, TOKEN},
 };
@@ -82,11 +88,27 @@ fn initialize_creates_the_token_with_metadata() {
     let metadata = world.env.metadata(&TOKEN_MINT);
     assert_eq!(metadata.symbol, "CULL");
     assert_eq!(metadata.mint, TOKEN_MINT);
-    assert_eq!(
-        Option::<Pubkey>::from(metadata.update_authority),
-        Some(ix::sale::config())
-    );
+    assert_eq!(Option::<Pubkey>::from(metadata.update_authority), None);
     assert_eq!(world.env.mint_supply(&TOKEN_MINT), 0);
+}
+
+#[test]
+fn attack_nobody_can_edit_the_game_token_metadata() {
+    let mut world = World::new();
+    let admin = world.admin();
+    let result = world.env.send(
+        &[update_field(
+            &spl_token_2022::ID,
+            &TOKEN_MINT,
+            &admin.pubkey(),
+            Field::Symbol,
+            "SCAM".into(),
+        )],
+        &[&admin],
+    );
+    let code = TokenMetadataError::ImmutableMetadata as u32;
+    expect_log(result, &format!("custom program error: {code:#x}"));
+    assert_eq!(world.env.metadata(&TOKEN_MINT).symbol, "CULL");
 }
 
 #[test]
@@ -175,6 +197,49 @@ fn round_caps_can_never_exceed_the_supply_cap() {
         &[&admin],
     );
     expect_error(result, SaleError::SupplyCapExceeded);
+}
+
+#[test]
+fn finalizing_a_round_returns_its_unsold_supply() {
+    let mut sale = Sale::new(2, 10 * TOKEN, |a| a.hard_cap = SUPPLY_CAP);
+    sale.buy(0, 4 * TOKEN).unwrap();
+    let admin = sale.world.admin();
+    let args = sale.world.round_args([0; 32], TOKEN);
+    let result = sale.world.env.send(
+        &[ix::sale::create_round(&admin.pubkey(), 1, args.clone())],
+        &[&admin],
+    );
+    expect_error(result, SaleError::SupplyCapExceeded);
+
+    sale.world.env.warp(1_000);
+    sale.world
+        .env
+        .ok(&[ix::sale::finalize_round(sale.round)], &[&admin]);
+    let config: Config = sale.world.env.account(&ix::sale::config());
+    assert_eq!(config.allocated, 4 * TOKEN);
+    assert!(sale.round().finalized);
+
+    let args = sale.world.round_args([0; 32], SUPPLY_CAP - 4 * TOKEN);
+    sale.world.create_round(args);
+}
+
+#[test]
+fn attack_a_round_cannot_be_finalized_early_or_twice() {
+    let mut sale = Sale::new(1, 10 * TOKEN, |_| {});
+    let admin = sale.world.admin();
+    let finalize = ix::sale::finalize_round(sale.round);
+    expect_error(
+        sale.world.env.send(slice::from_ref(&finalize), &[&admin]),
+        SaleError::RoundNotEnded,
+    );
+    sale.world.env.warp(1_000);
+    sale.world.env.ok(slice::from_ref(&finalize), &[&admin]);
+    expect_error(
+        sale.world.env.send(&[finalize], &[&admin]),
+        SaleError::AlreadyFinalized,
+    );
+    let config: Config = sale.world.env.account(&ix::sale::config());
+    assert_eq!(config.allocated, 0);
 }
 
 #[test]

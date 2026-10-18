@@ -146,6 +146,17 @@ pub mod sale {
         )
     }
 
+    pub fn finalize_round(id: u64) -> Instruction {
+        ix(
+            ::sale::ID,
+            i::FinalizeRound {},
+            a::FinalizeRound {
+                config: config(),
+                round: round(id),
+            },
+        )
+    }
+
     pub fn withdraw_proceeds(admin: &Pubkey, id: u64) -> Instruction {
         ix(
             ::sale::ID,
@@ -188,6 +199,28 @@ pub mod asset {
                 config: config(),
                 program_data: program_data(&::asset::ID),
                 system_program: system_program::ID,
+            },
+        )
+    }
+
+    pub fn propose_admin(admin: &Pubkey, new_admin: Pubkey) -> Instruction {
+        ix(
+            ::asset::ID,
+            i::ProposeAdmin { new_admin },
+            a::ProposeAdmin {
+                admin: *admin,
+                config: config(),
+            },
+        )
+    }
+
+    pub fn accept_admin(new_admin: &Pubkey) -> Instruction {
+        ix(
+            ::asset::ID,
+            i::AcceptAdmin {},
+            a::AcceptAdmin {
+                new_admin: *new_admin,
+                config: config(),
             },
         )
     }
@@ -258,7 +291,7 @@ pub mod asset {
 }
 
 pub mod duel {
-    use ::duel::{accounts as a, instruction as i, DUEL_SEED};
+    use ::duel::{accounts as a, instruction as i, DUEL_SEED, ESCROW_SEED};
 
     use super::*;
 
@@ -315,6 +348,10 @@ pub mod duel {
         )
     }
 
+    pub fn escrow(duel: &Pubkey, player: &Pubkey) -> Pubkey {
+        pda(&[ESCROW_SEED, duel.as_ref(), player.as_ref()], &::duel::ID)
+    }
+
     pub fn reveal(
         player: &Pubkey,
         duel: &Pubkey,
@@ -328,19 +365,27 @@ pub mod duel {
                 player: *player,
                 duel: *duel,
                 card: super::asset::card(card_mint),
+                card_mint: *card_mint,
                 player_cards: ata(player, card_mint),
+                escrow: escrow(duel, player),
+                token_program: spl_token_2022::ID,
+                system_program: system_program::ID,
             },
         )
     }
 
-    pub fn settle(duel: &Pubkey, creator: &Pubkey, opponent: &Pubkey) -> Instruction {
+    /// `revealed` is the card the player revealed, if any; it comes back with the claim.
+    pub fn claim(player: &Pubkey, duel: &Pubkey, revealed: Option<&Pubkey>) -> Instruction {
         ix(
             ::duel::ID,
-            i::Settle {},
-            a::Settle {
+            i::Claim {},
+            a::Claim {
+                player: *player,
                 duel: *duel,
-                creator: *creator,
-                opponent: *opponent,
+                card_mint: revealed.copied(),
+                escrow: revealed.map(|_| escrow(duel, player)),
+                player_cards: revealed.map(|mint| ata(player, mint)),
+                token_program: spl_token_2022::ID,
             },
         )
     }
@@ -349,8 +394,8 @@ pub mod duel {
 pub mod governance {
     use ::asset::CardField;
     use ::governance::{
-        accounts as a, instruction as i, InitializeArgs, AUTHORITY, CONFIG_SEED, PROPOSAL_SEED,
-        VOTER_SEED, VOTE_SEED,
+        accounts as a, instruction as i, InitializeArgs, AUTHORITY, CONFIG_SEED, FIELD_SEED,
+        PROPOSAL_SEED, VOTER_SEED, VOTE_SEED,
     };
     use ::sale::TOKEN_MINT;
 
@@ -488,7 +533,14 @@ pub mod governance {
         )
     }
 
-    pub fn execute(payer: &Pubkey, id: u64, card_mint: &Pubkey) -> Instruction {
+    pub fn field_version(card_mint: &Pubkey, field: CardField) -> Pubkey {
+        pda(
+            &[FIELD_SEED, card_mint.as_ref(), &[field as u8]],
+            &::governance::ID,
+        )
+    }
+
+    pub fn execute(payer: &Pubkey, id: u64, card_mint: &Pubkey, field: CardField) -> Instruction {
         ix(
             ::governance::ID,
             i::ExecuteProposal {},
@@ -496,6 +548,7 @@ pub mod governance {
                 payer: *payer,
                 config: config(),
                 proposal: proposal(id),
+                field_version: field_version(card_mint, field),
                 authority: AUTHORITY,
                 asset_config: super::asset::config(),
                 card: super::asset::card(card_mint),

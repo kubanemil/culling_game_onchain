@@ -46,6 +46,55 @@ fn attack_only_the_upgrade_authority_can_initialize_asset() {
 }
 
 #[test]
+fn asset_admin_transfer_takes_two_steps() {
+    let mut world = World::new();
+    let admin = world.admin();
+    let next = world.env.user();
+    let stranger = world.env.user();
+
+    world.env.ok(
+        &[ix::asset::propose_admin(&admin.pubkey(), next.pubkey())],
+        &[&admin],
+    );
+    let result = world
+        .env
+        .send(&[ix::asset::accept_admin(&stranger.pubkey())], &[&stranger]);
+    expect_error(result, AssetError::NotPendingAdmin);
+    let result = world.env.send(
+        &[ix::asset::propose_admin(
+            &stranger.pubkey(),
+            stranger.pubkey(),
+        )],
+        &[&stranger],
+    );
+    expect_error(result, AssetError::Unauthorized);
+
+    world
+        .env
+        .ok(&[ix::asset::accept_admin(&next.pubkey())], &[&next]);
+    let config: Config = world.env.account(&ix::asset::config());
+    assert_eq!((config.admin, config.pending_admin), (next.pubkey(), None));
+
+    let result = world.env.send(
+        &[ix::asset::create_card(
+            &admin.pubkey(),
+            3,
+            card_args("Old", BRUTE),
+        )],
+        &[&admin],
+    );
+    expect_error(result, AssetError::Unauthorized);
+    world.env.ok(
+        &[ix::asset::create_card(
+            &next.pubkey(),
+            3,
+            card_args("New", BRUTE),
+        )],
+        &[&next],
+    );
+}
+
+#[test]
 fn attack_a_non_admin_cannot_create_cards() {
     let mut world = World::new();
     let stranger = world.env.user();

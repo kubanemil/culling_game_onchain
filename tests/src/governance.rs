@@ -2,7 +2,8 @@ use std::slice;
 
 use ::asset::{CardField, MAX_URI_LEN};
 use ::governance::{
-    error::GovernanceError, InitializeArgs, Proposal, ProposalStatus, VoteRecord, Voter, AUTHORITY,
+    error::GovernanceError, FieldVersion, InitializeArgs, Proposal, ProposalStatus, VoteRecord,
+    Voter, AUTHORITY, EXECUTION_WINDOW,
 };
 use ::sale::TOKEN_MINT;
 use anchor_lang::{error::ErrorCode, prelude::Pubkey};
@@ -66,9 +67,10 @@ impl Dao {
 
     fn execute(&mut self, id: u64) -> TxResult {
         let card = self.world.cards[0];
+        let field = self.proposal(id).field;
         let payer = self.voter(2);
         self.world.env.send(
-            &[ix::governance::execute(&payer.pubkey(), id, &card)],
+            &[ix::governance::execute(&payer.pubkey(), id, &card, field)],
             &[&payer],
         )
     }
@@ -196,6 +198,69 @@ fn attack_tokens_stay_locked_until_the_vote_ends_so_they_cannot_vote_again() {
 }
 
 #[test]
+fn tokens_deposited_after_a_vote_stay_withdrawable() {
+    let mut dao = Dao::new();
+    dao.propose(0, CardField::Uri, NEW_URI).unwrap();
+    let alice = dao.voter(0);
+    let withdraw = |amount| ix::governance::withdraw(&alice.pubkey(), amount);
+
+    dao.world.env.ok(&[withdraw(50 * TOKEN)], &[&alice]);
+    dao.vote(0, 0, true).unwrap();
+    dao.world.env.ok(
+        &[ix::governance::deposit(&alice.pubkey(), 50 * TOKEN)],
+        &[&alice],
+    );
+    let voter: Voter = dao
+        .world
+        .env
+        .account(&ix::governance::voter(&alice.pubkey()));
+    assert_eq!(voter.locked_amount, 100 * TOKEN);
+
+    dao.world.env.ok(&[withdraw(50 * TOKEN)], &[&alice]);
+    expect_error(
+        dao.world.env.send(&[withdraw(1)], &[&alice]),
+        GovernanceError::TokensLocked,
+    );
+    assert_eq!(dao.proposal(0).yes, 100 * TOKEN);
+}
+
+#[test]
+fn attack_an_old_passed_proposal_cannot_undo_a_newer_change() {
+    let mut dao = Dao::new();
+    let mint = dao.world.cards[0];
+    dao.propose(0, CardField::Uri, "https://example.com/old.json")
+        .unwrap();
+    dao.propose(1, CardField::Uri, NEW_URI).unwrap();
+    dao.propose(2, CardField::Name, "Brute II").unwrap();
+    for id in 0..3 {
+        dao.vote(0, id, true).unwrap();
+    }
+    dao.end_voting(2);
+
+    dao.execute(1).unwrap();
+    expect_error(dao.execute(0), GovernanceError::StaleProposal);
+    assert_eq!(dao.world.env.metadata(&mint).uri, NEW_URI);
+
+    dao.execute(2).unwrap();
+    let version: FieldVersion = dao
+        .world
+        .env
+        .account(&ix::governance::field_version(&mint, CardField::Uri));
+    assert_eq!(version.last_proposal, Some(1));
+}
+
+#[test]
+fn attack_a_passed_proposal_expires_after_the_execution_window() {
+    let mut dao = Dao::new();
+    dao.propose(0, CardField::Uri, NEW_URI).unwrap();
+    dao.vote(0, 0, true).unwrap();
+    let end = dao.proposal(0).end_ts;
+    dao.world.env.warp_to(end + EXECUTION_WINDOW);
+    expect_error(dao.execute(0), GovernanceError::ProposalExpired);
+    assert_ne!(dao.world.env.metadata(&dao.world.cards[0]).uri, NEW_URI);
+}
+
+#[test]
 fn attack_a_proposal_without_quorum_or_majority_cannot_execute() {
     let mut dao = Dao::new();
     dao.propose(0, CardField::Uri, NEW_URI).unwrap();
@@ -230,7 +295,12 @@ fn attack_a_passed_proposal_cannot_be_pointed_at_another_card() {
     let other = dao.world.cards[1];
     let payer = dao.voter(2);
     let result = dao.world.env.send(
-        &[ix::governance::execute(&payer.pubkey(), 0, &other)],
+        &[ix::governance::execute(
+            &payer.pubkey(),
+            0,
+            &other,
+            CardField::Name,
+        )],
         &[&payer],
     );
     expect_error(result, ErrorCode::ConstraintHasOne);
