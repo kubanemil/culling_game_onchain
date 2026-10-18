@@ -5,7 +5,7 @@ use asset::Stats;
 /// Two random bytes per round, one per player.
 pub const ROUNDS: usize = 16;
 
-/// Each strike adds a roll of 0..ROLL_SIDES. 256 is a multiple of 8, so the roll is unbiased.
+/// 256 is a multiple of 8, so `roll % ROLL_SIDES` is unbiased.
 pub const ROLL_SIDES: u8 = 8;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -22,7 +22,7 @@ pub fn verify(proof: &[[u8; 32]], root: &[u8; 32], leaf: [u8; 32]) -> bool {
         == *root
 }
 
-/// Off-chain helper: the root and one proof per leaf. An odd node is carried up unpaired.
+/// An odd node is carried up unpaired.
 #[cfg(not(target_os = "solana"))]
 pub fn build(leaves: &[[u8; 32]]) -> ([u8; 32], Vec<Vec<[u8; 32]>>) {
     assert!(!leaves.is_empty(), "allowlist is empty");

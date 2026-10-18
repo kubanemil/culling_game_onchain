@@ -1,11 +1,4 @@
-/**
- * End-to-end tour against a cluster where the four programs are deployed and the provider
- * wallet is their upgrade authority:
- *   create sale -> buy -> claim -> buy cards -> duel -> propose -> vote -> execute.
- *
- *   ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 ANCHOR_WALLET=~/.config/solana/id.json \
- *     npm run walkthrough
- */
+// Needs the four programs deployed with the provider wallet as their upgrade authority.
 import { AnchorProvider } from "@anchor-lang/core";
 import { getTokenMetadata, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import {

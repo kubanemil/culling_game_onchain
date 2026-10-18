@@ -46,7 +46,7 @@ pub struct Claim<'info> {
 }
 
 /// Each player pulls their own share and card, so nothing is ever pushed to a wallet the
-/// other side controls. The creator's claim closes the duel once the opponent is done.
+/// other side controls.
 pub fn handle_claim(ctx: Context<Claim>) -> Result<()> {
     let now = Clock::get()?.unix_timestamp;
     let player = ctx.accounts.player.key();

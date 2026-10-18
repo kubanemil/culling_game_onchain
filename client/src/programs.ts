@@ -33,7 +33,6 @@ const u16 = (n: number) => {
 const find = (seeds: Buffer[], program: PublicKey) =>
   PublicKey.findProgramAddressSync(seeds, program)[0];
 
-/** Every PDA in the system, derived the same way the programs derive them. */
 export const pda = {
   saleConfig: () => find([seed("config")], SALE_PROGRAM_ID),
   tokenMint: () => find([seed("mint")], SALE_PROGRAM_ID),
