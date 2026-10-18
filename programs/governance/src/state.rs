@@ -27,7 +27,6 @@ pub enum ProposalStatus {
 pub struct Proposal {
     pub id: u64,
     pub proposer: Pubkey,
-    pub card: Pubkey,
     pub card_mint: Pubkey,
     pub field: CardField,
     #[max_len(MAX_URI_LEN)]
@@ -63,8 +62,18 @@ impl Proposal {
 #[derive(InitSpace)]
 pub struct Voter {
     pub owner: Pubkey,
-    /// End of the last proposal voted on, so the same tokens cannot vote from two wallets.
+    /// Largest weight voted with, locked until the last proposal voted on ends, so the same
+    /// tokens cannot vote from two wallets. Deposits above it stay withdrawable.
+    pub locked_amount: u64,
     pub locked_until: i64,
+    pub bump: u8,
+}
+
+/// The last proposal executed for one field of one card, so an older one cannot undo it.
+#[account]
+#[derive(InitSpace)]
+pub struct FieldVersion {
+    pub last_proposal: Option<u64>,
     pub bump: u8,
 }
 
@@ -97,7 +106,6 @@ mod tests {
         Proposal {
             id: 0,
             proposer: Pubkey::default(),
-            card: Pubkey::default(),
             card_mint: Pubkey::default(),
             field: CardField::Uri,
             value: String::new(),

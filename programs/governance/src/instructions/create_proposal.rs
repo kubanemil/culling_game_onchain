@@ -50,7 +50,6 @@ pub fn handle_create_proposal(
     ctx.accounts.proposal.set_inner(Proposal {
         id: config.proposal_count,
         proposer: ctx.accounts.proposer.key(),
-        card: ctx.accounts.card.key(),
         card_mint: ctx.accounts.card.mint,
         field,
         value,

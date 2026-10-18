@@ -47,8 +47,14 @@ pub struct Withdraw<'info> {
 pub fn handle_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
     require!(amount > 0, GovernanceError::ZeroAmount);
     let now = Clock::get()?.unix_timestamp;
+    let voter = &ctx.accounts.voter;
+    let locked = if now < voter.locked_until {
+        voter.locked_amount
+    } else {
+        0
+    };
     require!(
-        now >= ctx.accounts.voter.locked_until,
+        amount <= ctx.accounts.escrow.amount.saturating_sub(locked),
         GovernanceError::TokensLocked
     );
 

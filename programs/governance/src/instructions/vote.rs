@@ -75,6 +75,10 @@ pub fn handle_vote(ctx: Context<CastVote>, approve: bool) -> Result<()> {
         .ok_or(GovernanceError::MathOverflow)?;
 
     let voter = &mut ctx.accounts.voter;
+    if now >= voter.locked_until {
+        voter.locked_amount = 0;
+    }
+    voter.locked_amount = voter.locked_amount.max(weight);
     voter.locked_until = voter.locked_until.max(proposal.end_ts);
 
     ctx.accounts.vote.set_inner(VoteRecord {

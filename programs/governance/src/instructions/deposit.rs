@@ -58,6 +58,7 @@ pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
     if voter.owner == Pubkey::default() {
         voter.set_inner(Voter {
             owner: ctx.accounts.owner.key(),
+            locked_amount: 0,
             locked_until: 0,
             bump: ctx.bumps.voter,
         });

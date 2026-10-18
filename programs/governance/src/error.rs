@@ -24,6 +24,10 @@ pub enum GovernanceError {
     TokensLocked,
     #[msg("Proposal was already executed")]
     AlreadyExecuted,
+    #[msg("Proposal passed but its execution window has closed")]
+    ProposalExpired,
+    #[msg("A newer proposal already changed this field")]
+    StaleProposal,
     #[msg("Proposal did not reach quorum")]
     QuorumNotReached,
     #[msg("Proposal did not reach the approval threshold")]
