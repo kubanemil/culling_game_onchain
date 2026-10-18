@@ -31,12 +31,9 @@ pub struct ExecuteProposal<'info> {
     #[account(seeds = [AUTHORITY_SEED], bump = AUTHORITY_BUMP)]
     pub authority: UncheckedAccount<'info>,
 
-    #[account(
-        seeds = [asset::CONFIG_SEED],
-        bump = asset_config.bump,
-        seeds::program = asset::ID,
-    )]
-    pub asset_config: Account<'info, asset::Config>,
+    /// CHECK: asset's config PDA by seeds. The asset program loads and checks it again.
+    #[account(seeds = [asset::CONFIG_SEED], bump, seeds::program = asset::ID)]
+    pub asset_config: UncheckedAccount<'info>,
 
     pub card: Account<'info, Card>,
 
