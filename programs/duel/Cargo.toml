@@ -1,0 +1,30 @@
+[package]
+name = "duel"
+version = "0.1.0"
+description = "Trustless 1v1 card duels with commit-reveal"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "duel"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build", "asset/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+[dependencies]
+anchor-lang.workspace = true
+anchor-spl.workspace = true
+solana-sha256-hasher.workspace = true
+asset = { path = "../asset", features = ["no-entrypoint"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

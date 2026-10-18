@@ -1,75 +1,99 @@
-use crate::error::ErrorCode;
-use crate::state::{Amendment, Vote};
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    associated_token::AssociatedToken as AssociatedTokenProgram,
-    token::{self, Token as TokenProgram, TokenAccount},
+use anchor_spl::token_interface::{Mint, Token2022, TokenAccount};
+
+use crate::{
+    constants::*,
+    error::GovernanceError,
+    events::VoteCast,
+    state::{Config, Proposal, ProposalStatus, VoteRecord, Voter},
 };
-use asset::program::Asset;
 
 #[derive(Accounts)]
-#[instruction(amendment_id: u32)]
-pub struct VoteFor<'info> {
+pub struct CastVote<'info> {
     #[account(mut)]
-    pub signer: Signer<'info>,
+    pub owner: Signer<'info>,
 
-    #[account(mut)]
-    pub mint: Account<'info, token::Mint>,
+    #[account(seeds = [CONFIG_SEED], bump = config.bump, has_one = mint)]
+    pub config: Account<'info, Config>,
 
-    #[account(mut, associated_token::mint=mint, associated_token::authority=signer)]
-    pub signer_ata: Account<'info, TokenAccount>,
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
 
-    #[account(mut)]
-    pub amendment: Account<'info, Amendment>,
+    #[account(
+        mut,
+        seeds = [PROPOSAL_SEED, &proposal.id.to_le_bytes()],
+        bump = proposal.bump,
+    )]
+    pub proposal: Account<'info, Proposal>,
 
-    #[account(init, payer=signer, space=Vote::INIT_SPACE,
-        seeds=[b"vote", amendment.key().as_ref()], bump)]
-    pub vote: Account<'info, Vote>,
+    #[account(
+        mut,
+        seeds = [VOTER_SEED, owner.key().as_ref()],
+        bump = voter.bump,
+        has_one = owner,
+    )]
+    pub voter: Account<'info, Voter>,
 
-    #[account(init, payer=signer,
-        associated_token::mint=mint, associated_token::authority=vote)]
-    pub vote_ata: Account<'info, token::TokenAccount>,
+    /// Only the pinned mint counts, so a self-minted token has no weight here.
+    #[account(
+        associated_token::mint = mint,
+        associated_token::authority = voter,
+        associated_token::token_program = token_program,
+    )]
+    pub escrow: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    pub asset_program: Program<'info, Asset>,
-    pub associated_token_program: Program<'info, AssociatedTokenProgram>,
-    pub token_program: Program<'info, TokenProgram>,
+    /// One per voter per proposal: a second vote fails because this already exists.
+    #[account(
+        init,
+        payer = owner,
+        space = 8 + VoteRecord::INIT_SPACE,
+        seeds = [VOTE_SEED, proposal.key().as_ref(), owner.key().as_ref()],
+        bump,
+    )]
+    pub vote: Account<'info, VoteRecord>,
+
+    pub token_program: Program<'info, Token2022>,
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> VoteFor<'info> {
-    pub fn vote_for(&mut self, accept: bool, tokens: u64) -> Result<()> {
-        msg!("Voting for amendment with id: {:?}", self.amendment.key());
-        require!(
-            Clock::get()?.slot < self.amendment.deadline_slot,
-            ErrorCode::CustomError
-        );
-        self.transfer_tokens(tokens)?;
+pub fn handle_vote(ctx: Context<CastVote>, approve: bool) -> Result<()> {
+    let now = Clock::get()?.unix_timestamp;
+    let proposal = &mut ctx.accounts.proposal;
+    require!(
+        proposal.status == ProposalStatus::Voting && now < proposal.end_ts,
+        GovernanceError::VotingEnded
+    );
+    let weight = ctx.accounts.escrow.amount;
+    require!(weight > 0, GovernanceError::NoVotingPower);
 
-        self.vote.set_inner(Vote {
-            voter: self.signer.key(),
-            amendment: self.amendment.key(),
-            accept,
-            tokens,
-        });
+    let tally = if approve {
+        &mut proposal.yes
+    } else {
+        &mut proposal.no
+    };
+    *tally = tally
+        .checked_add(weight)
+        .ok_or(GovernanceError::MathOverflow)?;
 
-        match accept {
-            true => self.amendment.pros += tokens,
-            false => self.amendment.cons += tokens,
-        };
-
-        Ok(())
+    let voter = &mut ctx.accounts.voter;
+    if now >= voter.locked_until {
+        voter.locked_amount = 0;
     }
+    voter.locked_amount = voter.locked_amount.max(weight);
+    voter.locked_until = voter.locked_until.max(proposal.end_ts);
 
-    pub fn transfer_tokens(&mut self, amount: u64) -> Result<()> {
-        // transfer tokens to vote
-        let transfer_accounts = token::Transfer {
-            from: self.signer_ata.to_account_info(),
-            to: self.vote_ata.to_account_info(),
-            authority: self.signer.to_account_info(),
-        };
+    ctx.accounts.vote.set_inner(VoteRecord {
+        proposal: proposal.key(),
+        voter: ctx.accounts.owner.key(),
+        approve,
+        weight,
+        bump: ctx.bumps.vote,
+    });
 
-        let ctx = CpiContext::new(self.token_program.to_account_info(), transfer_accounts);
-        token::transfer(ctx, amount)?;
-        Ok(())
-    }
+    emit!(VoteCast {
+        proposal: proposal.key(),
+        voter: ctx.accounts.owner.key(),
+        approve,
+        weight,
+    });
+    Ok(())
 }

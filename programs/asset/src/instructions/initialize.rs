@@ -1,35 +1,39 @@
-use crate::state::AuthVault;
-use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{self, Token};
+use anchor_lang::{prelude::*, solana_program::bpf_loader_upgradeable};
+
+use crate::{constants::*, error::AssetError, state::Config};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(mut)]
-    pub signer: Signer<'info>,
+    pub admin: Signer<'info>,
 
-    #[account(init, seeds=[b"cullingToken", vault.key().as_ref()], payer=signer, bump, mint::decimals=6, mint::authority=vault)]
-    pub mint: Account<'info, token::Mint>,
+    #[account(
+        init,
+        payer = admin,
+        space = 8 + Config::INIT_SPACE,
+        seeds = [CONFIG_SEED],
+        bump,
+    )]
+    pub config: Account<'info, Config>,
 
-    #[account(init, payer=signer, space=AuthVault::INIT_SPACE, seeds=[b"authVault"], bump)]
-    pub vault: Account<'info, AuthVault>,
+    #[account(
+        seeds = [crate::ID.as_ref()],
+        bump,
+        seeds::program = bpf_loader_upgradeable::ID,
+        constraint = program_data.upgrade_authority_address == Some(admin.key())
+            @ AssetError::NotUpgradeAuthority,
+    )]
+    pub program_data: Account<'info, ProgramData>,
 
-    #[account(init, payer=signer, associated_token::mint=mint, associated_token::authority=vault)]
-    pub vault_ata: Account<'info, token::TokenAccount>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> Initialize<'info> {
-    pub fn init(&mut self, bumps: InitializeBumps) -> Result<()> {
-        msg!("Vault, Mint: {} | {}", self.vault.key(), self.mint.key());
-        self.vault.set_inner(AuthVault {
-            owner: self.signer.key(),
-            bump: bumps.vault,
-            mint_bump: bumps.mint,
-        });
-        Ok(())
-    }
+pub fn handle_initialize(ctx: Context<Initialize>) -> Result<()> {
+    ctx.accounts.config.set_inner(Config {
+        admin: ctx.accounts.admin.key(),
+        pending_admin: None,
+        card_count: 0,
+        bump: ctx.bumps.config,
+    });
+    Ok(())
 }

@@ -1,0 +1,22 @@
+{
+  "name": "@culling/client",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "walkthrough": "tsx scripts/walkthrough.ts"
+  },
+  "dependencies": {
+    "@anchor-lang/core": "^1.2.1",
+    "@solana/spl-token": "^0.4.15",
+    "@solana/web3.js": "^1.99.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

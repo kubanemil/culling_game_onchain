@@ -1,59 +1,46 @@
+pub mod constants;
 pub mod error;
+pub mod events;
 pub mod instructions;
 pub mod state;
 
 use anchor_lang::prelude::*;
 
+pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("BwDuywJ5NxriMUEJ7EMKFth7joH3W2snbMfQtKp4nwrf");
+declare_id!("4DZmGYrQ2ZuzAz2ZeJ9ucFRyrZG9h5bcmwsZ7c2dyLAa");
 
 #[program]
 pub mod asset {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        ctx.accounts.init(ctx.bumps)
+        instructions::initialize::handle_initialize(ctx)
     }
 
-    pub fn init_card(ctx: Context<InitCard>, card_id: u8) -> Result<()> {
-        ctx.accounts.init_card(card_id)
+    pub fn propose_admin(ctx: Context<ProposeAdmin>, new_admin: Pubkey) -> Result<()> {
+        instructions::transfer_admin::handle_propose_admin(ctx, new_admin)
     }
 
-    pub fn buy_token(ctx: Context<BuyToken>, amount: u64) -> Result<()> {
-        ctx.accounts.buy_token(amount)
+    pub fn accept_admin(ctx: Context<AcceptAdmin>) -> Result<()> {
+        instructions::transfer_admin::handle_accept_admin(ctx)
     }
 
-    pub fn buy_card(ctx: Context<BuyCard>, card_id: u8) -> Result<()> {
-        ctx.accounts.buy_card(card_id)
+    pub fn create_card(ctx: Context<CreateCard>, args: CreateCardArgs) -> Result<()> {
+        instructions::create_card::handle_create_card(ctx, args)
     }
 
-    pub fn create_metadata(
-        ctx: Context<CreateMetadata>,
-        card_id: u8,
-        name: String,
-        symbol: String,
-        uri: String,
+    pub fn buy_card(ctx: Context<BuyCard>) -> Result<()> {
+        instructions::buy_card::handle_buy_card(ctx)
+    }
+
+    pub fn update_card_metadata(
+        ctx: Context<UpdateCardMetadata>,
+        field: CardField,
+        value: String,
     ) -> Result<()> {
-        ctx.accounts.create_metadata(card_id, name, symbol, uri)
-    }
-
-    pub fn update_metadata(
-        ctx: Context<UpdateMetadata>,
-        card_id: u8,
-        name: String,
-        symbol: String,
-        uri: String,
-    ) -> Result<()> {
-        ctx.accounts.update_metadata(card_id, name, symbol, uri)
-    }
-
-    pub fn update_metadata_uri(
-        ctx: Context<UpdateMetadata>,
-        card_id: u8,
-        uri: String,
-    ) -> Result<()> {
-        ctx.accounts.update_uri(card_id, uri)
+        instructions::update_card_metadata::handle_update_card_metadata(ctx, field, value)
     }
 }

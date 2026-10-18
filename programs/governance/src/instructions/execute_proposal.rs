@@ -1,0 +1,110 @@
+use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{Mint, Token2022};
+use asset::{cpi::accounts::UpdateCardMetadata, program::Asset, Card, CARD_SEED};
+
+use crate::{
+    constants::*,
+    error::GovernanceError,
+    events::ProposalExecuted,
+    state::{Config, FieldVersion, Proposal, ProposalStatus},
+};
+
+#[derive(Accounts)]
+pub struct ExecuteProposal<'info> {
+    /// Anyone can execute a passed proposal. Pays any extra rent for longer metadata.
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(seeds = [CONFIG_SEED], bump = config.bump)]
+    pub config: Account<'info, Config>,
+
+    #[account(
+        mut,
+        seeds = [PROPOSAL_SEED, &proposal.id.to_le_bytes()],
+        bump = proposal.bump,
+        has_one = card_mint,
+    )]
+    pub proposal: Account<'info, Proposal>,
+
+    #[account(
+        init_if_needed,
+        payer = payer,
+        space = 8 + FieldVersion::INIT_SPACE,
+        seeds = [FIELD_SEED, card_mint.key().as_ref(), &[proposal.field as u8]],
+        bump,
+    )]
+    pub field_version: Account<'info, FieldVersion>,
+
+    /// CHECK: PDA that signs the CPI. Verified by seeds; holds no data.
+    #[account(seeds = [AUTHORITY_SEED], bump = AUTHORITY_BUMP)]
+    pub authority: UncheckedAccount<'info>,
+
+    /// CHECK: asset's config PDA by seeds. The asset program loads and checks it again.
+    #[account(seeds = [asset::CONFIG_SEED], bump, seeds::program = asset::ID)]
+    pub asset_config: UncheckedAccount<'info>,
+
+    #[account(
+        seeds = [CARD_SEED, card_mint.key().as_ref()],
+        bump = card.bump,
+        seeds::program = asset::ID,
+    )]
+    pub card: Account<'info, Card>,
+
+    #[account(mut)]
+    pub card_mint: Box<InterfaceAccount<'info, Mint>>,
+
+    pub asset_program: Program<'info, Asset>,
+    pub token_program: Program<'info, Token2022>,
+    pub system_program: Program<'info, System>,
+}
+
+pub fn handle_execute_proposal(ctx: Context<ExecuteProposal>) -> Result<()> {
+    let now = Clock::get()?.unix_timestamp;
+    let proposal = &ctx.accounts.proposal;
+    require!(
+        proposal.status == ProposalStatus::Voting,
+        GovernanceError::AlreadyExecuted
+    );
+    require!(now >= proposal.end_ts, GovernanceError::VotingNotEnded);
+    let expires = proposal
+        .end_ts
+        .checked_add(EXECUTION_WINDOW)
+        .ok_or(GovernanceError::MathOverflow)?;
+    require!(now < expires, GovernanceError::ProposalExpired);
+    proposal.check_passed(&ctx.accounts.config)?;
+
+    let field_version = &mut ctx.accounts.field_version;
+    if let Some(last) = field_version.last_proposal {
+        require!(proposal.id > last, GovernanceError::StaleProposal);
+    }
+    field_version.last_proposal = Some(proposal.id);
+    field_version.bump = ctx.bumps.field_version;
+
+    let signer_seeds: &[&[&[u8]]] = &[&[AUTHORITY_SEED, &[AUTHORITY_BUMP]]];
+    asset::cpi::update_card_metadata(
+        CpiContext::new_with_signer(
+            ctx.accounts.asset_program.key(),
+            UpdateCardMetadata {
+                governance_authority: ctx.accounts.authority.to_account_info(),
+                payer: ctx.accounts.payer.to_account_info(),
+                config: ctx.accounts.asset_config.to_account_info(),
+                card: ctx.accounts.card.to_account_info(),
+                card_mint: ctx.accounts.card_mint.to_account_info(),
+                token_program: ctx.accounts.token_program.to_account_info(),
+                system_program: ctx.accounts.system_program.to_account_info(),
+            },
+            signer_seeds,
+        ),
+        proposal.field,
+        proposal.value.clone(),
+    )?;
+
+    let proposal = &mut ctx.accounts.proposal;
+    proposal.status = ProposalStatus::Executed;
+    emit!(ProposalExecuted {
+        proposal: proposal.key(),
+        yes: proposal.yes,
+        no: proposal.no,
+    });
+    Ok(())
+}
