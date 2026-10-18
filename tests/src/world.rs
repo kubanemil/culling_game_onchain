@@ -21,20 +21,21 @@ pub const CARD_PRICE: u64 = 10 * TOKEN;
 pub const QUORUM: u64 = 100 * TOKEN;
 pub const VOTING_PERIOD: i64 = 3 * 24 * 60 * 60;
 
+/// Brute beats Glass, Guard beats Brute, Glass beats Guard, each about 59% of the time.
 pub const BRUTE: Stats = Stats {
-    attack: 14,
+    attack: 20,
     defense: 2,
-    health: 40,
+    health: 34,
 };
 pub const GUARD: Stats = Stats {
-    attack: 6,
-    defense: 9,
-    health: 55,
+    attack: 7,
+    defense: 11,
+    health: 54,
 };
 pub const GLASS: Stats = Stats {
-    attack: 20,
+    attack: 30,
     defense: 0,
-    health: 24,
+    health: 23,
 };
 
 pub struct World {
