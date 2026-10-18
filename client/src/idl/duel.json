@@ -1,0 +1,708 @@
+{
+  "address": "HcyprDcax4Ffz6h9s1sA8X4Zh6yWwZuipw2qFvxG6CkE",
+  "metadata": {
+    "name": "duel",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Trustless 1v1 card duels with commit-reveal"
+  },
+  "instructions": [
+    {
+      "name": "accept_duel",
+      "discriminator": [
+        80,
+        52,
+        90,
+        135,
+        172,
+        221,
+        175,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "opponent",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel.creator",
+                "account": "Duel"
+              },
+              {
+                "kind": "account",
+                "path": "duel.nonce",
+                "account": "Duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "commitment",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "cancel_duel",
+      "discriminator": [
+        83,
+        124,
+        224,
+        237,
+        235,
+        44,
+        38,
+        57
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "duel"
+          ]
+        },
+        {
+          "name": "duel",
+          "docs": [
+            "Closing returns the stake and the rent in one step."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "account",
+                "path": "duel.nonce",
+                "account": "Duel"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_duel",
+      "discriminator": [
+        49,
+        28,
+        93,
+        11,
+        75,
+        242,
+        69,
+        165
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "stake",
+          "type": "u64"
+        },
+        {
+          "name": "commitment",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "opponent",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "reveal",
+      "discriminator": [
+        9,
+        35,
+        59,
+        190,
+        167,
+        249,
+        76,
+        115
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "signer": true
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel.creator",
+                "account": "Duel"
+              },
+              {
+                "kind": "account",
+                "path": "duel.nonce",
+                "account": "Duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "card",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  114,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "card.mint",
+                "account": "Card"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                47,
+                203,
+                19,
+                117,
+                13,
+                93,
+                61,
+                10,
+                222,
+                90,
+                196,
+                160,
+                94,
+                240,
+                211,
+                70,
+                83,
+                0,
+                55,
+                131,
+                144,
+                217,
+                242,
+                92,
+                178,
+                111,
+                5,
+                51,
+                103,
+                67,
+                86,
+                55
+              ]
+            }
+          }
+        },
+        {
+          "name": "player_cards"
+        }
+      ],
+      "args": [
+        {
+          "name": "secret",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "settle",
+      "discriminator": [
+        175,
+        42,
+        185,
+        87,
+        144,
+        131,
+        102,
+        212
+      ],
+      "accounts": [
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "account",
+                "path": "duel.nonce",
+                "account": "Duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "creator",
+          "writable": true,
+          "relations": [
+            "duel"
+          ]
+        },
+        {
+          "name": "opponent",
+          "writable": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Duel",
+      "discriminator": [
+        126,
+        229,
+        210,
+        60,
+        177,
+        135,
+        124,
+        224
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "DuelSettled",
+      "discriminator": [
+        254,
+        160,
+        50,
+        193,
+        155,
+        112,
+        122,
+        64
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "StakeTooSmall",
+      "msg": "Stake is below the minimum of 0.001 SOL"
+    },
+    {
+      "code": 6001,
+      "name": "SelfPlay",
+      "msg": "A player cannot duel themselves"
+    },
+    {
+      "code": 6002,
+      "name": "NotOpen",
+      "msg": "Duel is not open"
+    },
+    {
+      "code": 6003,
+      "name": "NotAccepted",
+      "msg": "Duel was not accepted"
+    },
+    {
+      "code": 6004,
+      "name": "WrongOpponent",
+      "msg": "This duel is reserved for another opponent"
+    },
+    {
+      "code": 6005,
+      "name": "NotAPlayer",
+      "msg": "Signer is not a player in this duel"
+    },
+    {
+      "code": 6006,
+      "name": "AlreadyRevealed",
+      "msg": "Player has already revealed"
+    },
+    {
+      "code": 6007,
+      "name": "RevealWindowClosed",
+      "msg": "Reveal window has closed"
+    },
+    {
+      "code": 6008,
+      "name": "RevealWindowOpen",
+      "msg": "Reveal window is still open"
+    },
+    {
+      "code": 6009,
+      "name": "CommitmentMismatch",
+      "msg": "Card and secret do not match the commitment"
+    },
+    {
+      "code": 6010,
+      "name": "CardNotOwned",
+      "msg": "Player does not hold the revealed card"
+    },
+    {
+      "code": 6011,
+      "name": "MathOverflow",
+      "msg": "Arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "Card",
+      "docs": [
+        "One per card type. The mint holds name, symbol and URI; this holds what the game reads."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u16"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "stats",
+            "type": {
+              "defined": {
+                "name": "Stats"
+              }
+            }
+          },
+          {
+            "name": "price",
+            "docs": [
+              "Game tokens (base units) burned to mint one card."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Duel",
+      "docs": [
+        "Holds both stakes until `settle` pays out and closes it."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "opponent",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "stake",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "DuelStatus"
+              }
+            }
+          },
+          {
+            "name": "creator_commitment",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "opponent_commitment",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "reveal_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "creator_reveal",
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "Revealed"
+                }
+              }
+            }
+          },
+          {
+            "name": "opponent_reveal",
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "Revealed"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DuelSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "duel",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "opponent",
+            "type": "pubkey"
+          },
+          {
+            "name": "winner",
+            "docs": [
+              "`None` on a draw or when neither player revealed."
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "stake",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DuelStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Accepted"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Revealed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "card",
+            "type": "pubkey"
+          },
+          {
+            "name": "stats",
+            "docs": [
+              "Snapshot at reveal time, so a later metadata vote cannot change a live duel."
+            ],
+            "type": {
+              "defined": {
+                "name": "Stats"
+              }
+            }
+          },
+          {
+            "name": "secret",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Stats",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "attack",
+            "type": "u16"
+          },
+          {
+            "name": "defense",
+            "type": "u16"
+          },
+          {
+            "name": "health",
+            "type": "u16"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "DUEL_SEED",
+      "type": "bytes",
+      "value": "[100, 117, 101, 108]"
+    },
+    {
+      "name": "MIN_STAKE",
+      "docs": [
+        "Every payout must keep an emptied wallet rent-exempt, or settling could be blocked."
+      ],
+      "type": "u64",
+      "value": "1000000"
+    },
+    {
+      "name": "REVEAL_WINDOW",
+      "docs": [
+        "Seconds both players have to reveal once the duel is accepted."
+      ],
+      "type": "i64",
+      "value": "3600"
+    }
+  ]
+}
