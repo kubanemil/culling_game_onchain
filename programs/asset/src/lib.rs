@@ -20,6 +20,14 @@ pub mod asset {
         instructions::initialize::handle_initialize(ctx)
     }
 
+    pub fn propose_admin(ctx: Context<ProposeAdmin>, new_admin: Pubkey) -> Result<()> {
+        instructions::transfer_admin::handle_propose_admin(ctx, new_admin)
+    }
+
+    pub fn accept_admin(ctx: Context<AcceptAdmin>) -> Result<()> {
+        instructions::transfer_admin::handle_accept_admin(ctx)
+    }
+
     pub fn create_card(ctx: Context<CreateCard>, args: CreateCardArgs) -> Result<()> {
         instructions::create_card::handle_create_card(ctx, args)
     }

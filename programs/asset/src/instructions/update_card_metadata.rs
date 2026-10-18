@@ -3,11 +3,12 @@ use anchor_spl::token_interface::{
     token_metadata_update_field, Mint, Token2022, TokenMetadataUpdateField,
 };
 
+use culling_common::fund_rent;
+
 use crate::{
     constants::*,
     error::AssetError,
     events::CardMetadataUpdated,
-    instructions::fund_rent,
     state::{Card, CardField, Config},
 };
 

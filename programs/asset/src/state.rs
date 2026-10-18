@@ -7,6 +7,7 @@ use crate::constants::*;
 #[derive(InitSpace)]
 pub struct Config {
     pub admin: Pubkey,
+    pub pending_admin: Option<Pubkey>,
     pub card_count: u16,
     pub bump: u8,
 }
@@ -54,7 +55,7 @@ impl CardField {
     }
 
     pub fn accepts(self, value: &str) -> bool {
-        !value.is_empty() && value.len() <= self.max_len()
+        culling_common::fits(value, self.max_len())
     }
 }
 

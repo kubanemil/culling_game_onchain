@@ -3,11 +3,12 @@ use anchor_spl::token_interface::{
     token_metadata_initialize, Mint, Token2022, TokenMetadataInitialize,
 };
 
+use culling_common::{fund_rent, valid_metadata};
+
 use crate::{
     constants::*,
     error::AssetError,
-    instructions::fund_rent,
-    state::{Card, CardField, Config, Stats},
+    state::{Card, Config, Stats},
 };
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -61,9 +62,7 @@ pub fn handle_create_card(ctx: Context<CreateCard>, args: CreateCardArgs) -> Res
     require!(args.stats.is_valid(), AssetError::InvalidStats);
     require!(args.price > 0, AssetError::InvalidPrice);
     require!(
-        CardField::Name.accepts(&args.name)
-            && CardField::Symbol.accepts(&args.symbol)
-            && CardField::Uri.accepts(&args.uri),
+        valid_metadata(&args.name, &args.symbol, &args.uri),
         AssetError::InvalidMetadata
     );
 

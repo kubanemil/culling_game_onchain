@@ -31,6 +31,7 @@ pub struct Initialize<'info> {
 pub fn handle_initialize(ctx: Context<Initialize>) -> Result<()> {
     ctx.accounts.config.set_inner(Config {
         admin: ctx.accounts.admin.key(),
+        pending_admin: None,
         card_count: 0,
         bump: ctx.bumps.config,
     });

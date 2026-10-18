@@ -6,6 +6,8 @@ pub enum AssetError {
     NotUpgradeAuthority,
     #[msg("Signer is not the asset admin")]
     Unauthorized,
+    #[msg("Signer is not the pending admin")]
+    NotPendingAdmin,
     #[msg("Attack and health must be 1-100, defense 0-100")]
     InvalidStats,
     #[msg("Card price must be greater than zero")]

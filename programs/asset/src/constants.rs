@@ -25,6 +25,4 @@ pub const GOVERNANCE_AUTHORITY: Pubkey = Pubkey::new_from_array(
 
 pub const MAX_STAT: u16 = 100;
 
-pub const MAX_NAME_LEN: usize = 32;
-pub const MAX_SYMBOL_LEN: usize = 10;
-pub const MAX_URI_LEN: usize = 200;
+pub use culling_common::{MAX_NAME_LEN, MAX_SYMBOL_LEN, MAX_URI_LEN};
