@@ -22,7 +22,3 @@ pub const MAX_DECIMALS: u8 = 9;
 pub const MAX_PROOF_LEN: usize = 24;
 
 pub const MAX_VESTING_SECONDS: i64 = 10 * 365 * 24 * 60 * 60;
-
-pub const MAX_NAME_LEN: usize = 32;
-pub const MAX_SYMBOL_LEN: usize = 10;
-pub const MAX_URI_LEN: usize = 200;

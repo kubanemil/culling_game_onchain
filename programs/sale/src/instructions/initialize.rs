@@ -1,11 +1,10 @@
-use anchor_lang::{
-    prelude::*,
-    solana_program::bpf_loader_upgradeable,
-    system_program::{transfer, Transfer},
-};
+use anchor_lang::{prelude::*, solana_program::bpf_loader_upgradeable};
 use anchor_spl::token_interface::{
-    token_metadata_initialize, Mint, Token2022, TokenMetadataInitialize,
+    spl_pod::optional_keys::OptionalNonZeroPubkey, token_metadata_initialize,
+    token_metadata_update_authority, Mint, Token2022, TokenMetadataInitialize,
+    TokenMetadataUpdateAuthority,
 };
+use culling_common::{fund_rent, valid_metadata};
 
 use crate::{constants::*, error::SaleError, state::Config};
 
@@ -63,9 +62,7 @@ pub fn handle_initialize(ctx: Context<Initialize>, args: InitializeArgs) -> Resu
     require!(args.decimals <= MAX_DECIMALS, SaleError::InvalidDecimals);
     require!(args.supply_cap > 0, SaleError::InvalidSupplyCap);
     require!(
-        valid_len(&args.name, MAX_NAME_LEN)
-            && valid_len(&args.symbol, MAX_SYMBOL_LEN)
-            && valid_len(&args.uri, MAX_URI_LEN),
+        valid_metadata(&args.name, &args.symbol, &args.uri),
         SaleError::InvalidMetadata
     );
 
@@ -99,26 +96,24 @@ pub fn handle_initialize(ctx: Context<Initialize>, args: InitializeArgs) -> Resu
         args.uri,
     )?;
 
-    // Token-2022 grows the mint to fit the metadata but leaves rent to the caller.
-    let mint = accounts.mint.to_account_info();
-    let missing = Rent::get()?
-        .minimum_balance(mint.data_len())
-        .saturating_sub(mint.lamports());
-    if missing > 0 {
-        transfer(
-            CpiContext::new(
-                accounts.system_program.key(),
-                Transfer {
-                    from: accounts.admin.to_account_info(),
-                    to: mint,
-                },
-            ),
-            missing,
-        )?;
-    }
-    Ok(())
-}
+    // No instruction edits the token's metadata, so drop the authority and make that final.
+    token_metadata_update_authority(
+        CpiContext::new_with_signer(
+            accounts.token_program.key(),
+            TokenMetadataUpdateAuthority {
+                program_id: accounts.token_program.to_account_info(),
+                metadata: accounts.mint.to_account_info(),
+                current_authority: accounts.config.to_account_info(),
+                new_authority: accounts.config.to_account_info(),
+            },
+            signer_seeds,
+        ),
+        OptionalNonZeroPubkey::default(),
+    )?;
 
-fn valid_len(value: &str, max: usize) -> bool {
-    !value.is_empty() && value.len() <= max
+    fund_rent(
+        accounts.admin.to_account_info(),
+        accounts.mint.to_account_info(),
+        accounts.system_program.key(),
+    )
 }

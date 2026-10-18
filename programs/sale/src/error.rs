@@ -44,6 +44,8 @@ pub enum SaleError {
     NothingToClaim,
     #[msg("Round has no proceeds to withdraw")]
     NoProceeds,
+    #[msg("Round is already finalized")]
+    AlreadyFinalized,
     #[msg("Arithmetic overflow")]
     MathOverflow,
 }

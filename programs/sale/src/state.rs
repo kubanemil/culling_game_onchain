@@ -7,7 +7,7 @@ pub struct Config {
     pub pending_admin: Option<Pubkey>,
     pub mint: Pubkey,
     pub decimals: u8,
-    /// Sum of all round hard caps can never exceed this.
+    /// Hard caps of open rounds plus tokens sold in finalized ones never exceed this.
     pub supply_cap: u64,
     pub allocated: u64,
     pub round_count: u64,
@@ -32,6 +32,8 @@ pub struct Round {
     /// Seconds after `end_ts` until everything unlocks.
     pub vesting: i64,
     pub paused: bool,
+    /// Set once the unsold part of `hard_cap` has gone back to the supply cap.
+    pub finalized: bool,
     pub bump: u8,
 }
 

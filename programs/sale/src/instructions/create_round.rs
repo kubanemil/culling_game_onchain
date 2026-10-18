@@ -76,6 +76,7 @@ pub fn handle_create_round(ctx: Context<CreateRound>, args: RoundArgs) -> Result
         cliff: args.cliff,
         vesting: args.vesting,
         paused: false,
+        finalized: false,
         bump: ctx.bumps.round,
     });
 

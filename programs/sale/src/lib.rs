@@ -34,6 +34,10 @@ pub mod sale {
         instructions::create_round::handle_create_round(ctx, args)
     }
 
+    pub fn finalize_round(ctx: Context<FinalizeRound>) -> Result<()> {
+        instructions::finalize_round::handle_finalize_round(ctx)
+    }
+
     pub fn set_paused(ctx: Context<SetPaused>, paused: bool) -> Result<()> {
         instructions::set_paused::handle_set_paused(ctx, paused)
     }
