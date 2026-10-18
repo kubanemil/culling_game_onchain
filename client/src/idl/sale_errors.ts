@@ -21,7 +21,8 @@ export const SaleErrorCode = {
   HardCapExceeded: 6018,
   NothingToClaim: 6019,
   NoProceeds: 6020,
-  MathOverflow: 6021
+  AlreadyFinalized: 6021,
+  MathOverflow: 6022
 };
 
 export type SaleErrorName = keyof typeof SaleErrorCode;

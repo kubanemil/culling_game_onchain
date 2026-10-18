@@ -436,6 +436,10 @@ export type Governance = {
           }
         },
         {
+          "name": "fieldVersion",
+          "writable": true
+        },
+        {
           "name": "authority",
           "pda": {
             "seeds": [
@@ -513,9 +517,60 @@ export type Governance = {
         },
         {
           "name": "card",
-          "relations": [
-            "proposal"
-          ]
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  114,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "cardMint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                47,
+                203,
+                19,
+                117,
+                13,
+                93,
+                61,
+                10,
+                222,
+                90,
+                196,
+                160,
+                94,
+                240,
+                211,
+                70,
+                83,
+                0,
+                55,
+                131,
+                144,
+                217,
+                242,
+                92,
+                178,
+                111,
+                5,
+                51,
+                103,
+                67,
+                86,
+                55
+              ]
+            }
+          }
         },
         {
           "name": "cardMint",
@@ -1030,6 +1085,19 @@ export type Governance = {
       ]
     },
     {
+      "name": "fieldVersion",
+      "discriminator": [
+        161,
+        214,
+        46,
+        203,
+        63,
+        159,
+        141,
+        165
+      ]
+    },
+    {
       "name": "proposal",
       "discriminator": [
         26,
@@ -1155,16 +1223,26 @@ export type Governance = {
     },
     {
       "code": 6011,
+      "name": "proposalExpired",
+      "msg": "Proposal passed but its execution window has closed"
+    },
+    {
+      "code": 6012,
+      "name": "staleProposal",
+      "msg": "A newer proposal already changed this field"
+    },
+    {
+      "code": 6013,
       "name": "quorumNotReached",
       "msg": "Proposal did not reach quorum"
     },
     {
-      "code": 6012,
+      "code": 6014,
       "name": "thresholdNotReached",
       "msg": "Proposal did not reach the approval threshold"
     },
     {
-      "code": 6013,
+      "code": 6015,
       "name": "mathOverflow",
       "msg": "Arithmetic overflow"
     }
@@ -1261,6 +1339,27 @@ export type Governance = {
       }
     },
     {
+      "name": "fieldVersion",
+      "docs": [
+        "The last proposal executed for one field of one card, so an older one cannot undo it."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lastProposal",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
       "name": "initializeArgs",
       "type": {
         "kind": "struct",
@@ -1291,10 +1390,6 @@ export type Governance = {
           },
           {
             "name": "proposer",
-            "type": "pubkey"
-          },
-          {
-            "name": "card",
             "type": "pubkey"
           },
           {
@@ -1463,10 +1558,15 @@ export type Governance = {
             "type": "pubkey"
           },
           {
-            "name": "lockedUntil",
+            "name": "lockedAmount",
             "docs": [
-              "End of the last proposal voted on, so the same tokens cannot vote from two wallets."
+              "Largest weight voted with, locked until the last proposal voted on ends, so the same",
+              "tokens cannot vote from two wallets. Deposits above it stay withdrawable."
             ],
+            "type": "u64"
+          },
+          {
+            "name": "lockedUntil",
             "type": "i64"
           },
           {
@@ -1482,6 +1582,19 @@ export type Governance = {
       "name": "configSeed",
       "type": "bytes",
       "value": "[99, 111, 110, 102, 105, 103]"
+    },
+    {
+      "name": "executionWindow",
+      "docs": [
+        "Seconds after voting ends during which a passed proposal can run. After that it expires."
+      ],
+      "type": "i64",
+      "value": "604800"
+    },
+    {
+      "name": "fieldSeed",
+      "type": "bytes",
+      "value": "[102, 105, 101, 108, 100]"
     },
     {
       "name": "proposalSeed",

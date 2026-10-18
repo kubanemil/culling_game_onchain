@@ -38,9 +38,13 @@ export interface RoundArgs {
   vesting: number;
 }
 
+const CARD_FIELDS: CardField[] = ["name", "symbol", "uri"];
+
 const bn = (n: bigint | number) => new BN(n.toString());
 const bytes = (b: Buffer) => Array.from(b);
 const field = (f: CardField) => ({ [f]: {} }) as never;
+const fieldIndex = (encoded: object) =>
+  CARD_FIELDS.indexOf(Object.keys(encoded)[0] as CardField);
 
 /** Thin typed wrapper over the four programs. The provider wallet pays fees and acts as admin. */
 export class Culling {
@@ -123,6 +127,14 @@ export class Culling {
         buyerTokens: ata(buyer.publicKey, pda.tokenMint()),
       })
       .signers([buyer])
+      .rpc();
+  }
+
+  /** Anyone can call this after the round ends to give its unsold supply back. */
+  finalizeRound(round: bigint) {
+    return this.sale.methods
+      .finalizeRound()
+      .accountsPartial({ config: pda.saleConfig(), round: pda.round(round) })
       .rpc();
   }
 
@@ -210,6 +222,7 @@ export class Culling {
     return secret;
   }
 
+  /** Moves one card into escrow until the player claims. */
   reveal(player: Keypair, duel: PublicKey, cardMint: PublicKey, secret: Buffer) {
     return this.duel.methods
       .reveal(bytes(secret))
@@ -217,7 +230,9 @@ export class Culling {
         player: player.publicKey,
         duel,
         card: pda.card(cardMint),
+        cardMint,
         playerCards: ata(player.publicKey, cardMint),
+        escrow: pda.escrow(duel, player.publicKey),
       })
       .signers([player])
       .rpc();
@@ -231,13 +246,26 @@ export class Culling {
       .rpc();
   }
 
-  /** Anyone can settle once both revealed or the reveal window closed. */
-  async settle(duel: PublicKey) {
+  /**
+   * Pays the player's share and returns their card once both revealed or the window
+   * closed. The creator's claim closes the duel after the opponent is done.
+   */
+  async claimDuel(player: Keypair, duel: PublicKey) {
     const state = await this.duel.account.duel.fetch(duel);
-    if (!state.opponent) throw new Error("duel was not accepted");
+    const revealed = player.publicKey.equals(state.creator)
+      ? state.creatorReveal
+      : state.opponentReveal;
+    const card = revealed?.card ?? null;
     return this.duel.methods
-      .settle()
-      .accountsPartial({ duel, creator: state.creator, opponent: state.opponent })
+      .claim()
+      .accountsPartial({
+        player: player.publicKey,
+        duel,
+        cardMint: card,
+        escrow: card && pda.escrow(duel, player.publicKey),
+        playerCards: card && ata(player.publicKey, card),
+      })
+      .signers([player])
       .rpc();
   }
 
@@ -340,9 +368,10 @@ export class Culling {
         payer: this.admin,
         config: pda.governanceConfig(),
         proposal,
+        fieldVersion: pda.fieldVersion(state.cardMint, fieldIndex(state.field)),
         authority: pda.governanceAuthority(),
         assetConfig: pda.assetConfig(),
-        card: state.card,
+        card: pda.card(state.cardMint),
         cardMint: state.cardMint,
       })
       .rpc();

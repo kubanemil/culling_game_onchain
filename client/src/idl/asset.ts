@@ -14,6 +14,45 @@ export type Asset = {
   },
   "instructions": [
     {
+      "name": "acceptAdmin",
+      "discriminator": [
+        112,
+        42,
+        45,
+        90,
+        116,
+        181,
+        13,
+        170
+      ],
+      "accounts": [
+        {
+          "name": "newAdmin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "buyCard",
       "discriminator": [
         113,
@@ -388,6 +427,53 @@ export type Asset = {
       "args": []
     },
     {
+      "name": "proposeAdmin",
+      "discriminator": [
+        121,
+        214,
+        199,
+        212,
+        87,
+        39,
+        117,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "newAdmin",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "updateCardMetadata",
       "discriminator": [
         170,
@@ -536,21 +622,26 @@ export type Asset = {
     },
     {
       "code": 6002,
+      "name": "notPendingAdmin",
+      "msg": "Signer is not the pending admin"
+    },
+    {
+      "code": 6003,
       "name": "invalidStats",
       "msg": "Attack and health must be 1-100, defense 0-100"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "invalidPrice",
       "msg": "Card price must be greater than zero"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "invalidMetadata",
       "msg": "Name, symbol or URI is empty or too long"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "mathOverflow",
       "msg": "Arithmetic overflow"
     }
@@ -640,6 +731,12 @@ export type Asset = {
           {
             "name": "admin",
             "type": "pubkey"
+          },
+          {
+            "name": "pendingAdmin",
+            "type": {
+              "option": "pubkey"
+            }
           },
           {
             "name": "cardCount",

@@ -129,6 +129,98 @@ export type Duel = {
       "args": []
     },
     {
+      "name": "claim",
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel.creator",
+                "account": "duel"
+              },
+              {
+                "kind": "account",
+                "path": "duel.nonce",
+                "account": "duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "cardMint",
+          "docs": [
+            "The next three are needed only by a player who revealed, to get the card back."
+          ],
+          "optional": true
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "optional": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel"
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "playerCards",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "createDuel",
       "discriminator": [
         49,
@@ -217,6 +309,7 @@ export type Duel = {
       "accounts": [
         {
           "name": "player",
+          "writable": true,
           "signer": true
         },
         {
@@ -305,7 +398,50 @@ export type Duel = {
           }
         },
         {
-          "name": "playerCards"
+          "name": "cardMint"
+        },
+        {
+          "name": "playerCards",
+          "writable": true
+        },
+        {
+          "name": "escrow",
+          "docs": [
+            "The card stays here until claim, so one card cannot back two reveals or be",
+            "borrowed for a single transaction. Escrowing at commit would show the card early."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel"
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -319,59 +455,6 @@ export type Duel = {
           }
         }
       ]
-    },
-    {
-      "name": "settle",
-      "discriminator": [
-        175,
-        42,
-        185,
-        87,
-        144,
-        131,
-        102,
-        212
-      ],
-      "accounts": [
-        {
-          "name": "duel",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  117,
-                  101,
-                  108
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "creator"
-              },
-              {
-                "kind": "account",
-                "path": "duel.nonce",
-                "account": "duel"
-              }
-            ]
-          }
-        },
-        {
-          "name": "creator",
-          "writable": true,
-          "relations": [
-            "duel"
-          ]
-        },
-        {
-          "name": "opponent",
-          "writable": true
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -462,6 +545,21 @@ export type Duel = {
     },
     {
       "code": 6011,
+      "name": "alreadyClaimed",
+      "msg": "Player has already claimed"
+    },
+    {
+      "code": 6012,
+      "name": "missingCardAccounts",
+      "msg": "Pass the card mint, escrow and your card account to get your card back"
+    },
+    {
+      "code": 6013,
+      "name": "wrongCard",
+      "msg": "Card mint does not match the revealed card"
+    },
+    {
+      "code": 6014,
       "name": "mathOverflow",
       "msg": "Arithmetic overflow"
     }
@@ -505,7 +603,7 @@ export type Duel = {
     {
       "name": "duel",
       "docs": [
-        "Holds both stakes until `settle` pays out and closes it."
+        "Holds both stakes until each player claims their share. Closed by the creator's claim."
       ],
       "type": {
         "kind": "struct",
@@ -579,6 +677,14 @@ export type Duel = {
             }
           },
           {
+            "name": "creatorClaimed",
+            "type": "bool"
+          },
+          {
+            "name": "opponentClaimed",
+            "type": "bool"
+          },
+          {
             "name": "bump",
             "type": "u8"
           }
@@ -644,7 +750,7 @@ export type Duel = {
           {
             "name": "stats",
             "docs": [
-              "Copied at reveal so `settle` needs no card accounts."
+              "Copied at reveal so the outcome needs no card accounts."
             ],
             "type": {
               "defined": {
@@ -692,9 +798,17 @@ export type Duel = {
       "value": "[100, 117, 101, 108]"
     },
     {
+      "name": "escrowSeed",
+      "docs": [
+        "A revealed card waits in this token account until its owner claims."
+      ],
+      "type": "bytes",
+      "value": "[101, 115, 99, 114, 111, 119]"
+    },
+    {
       "name": "minStake",
       "docs": [
-        "Every payout must keep an emptied wallet rent-exempt, or settling could be blocked."
+        "Keeps every payout above the rent minimum of an empty wallet."
       ],
       "type": "u64",
       "value": "1000000"

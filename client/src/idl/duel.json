@@ -123,6 +123,98 @@
       "args": []
     },
     {
+      "name": "claim",
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel.creator",
+                "account": "Duel"
+              },
+              {
+                "kind": "account",
+                "path": "duel.nonce",
+                "account": "Duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "card_mint",
+          "docs": [
+            "The next three are needed only by a player who revealed, to get the card back."
+          ],
+          "optional": true
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "optional": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel"
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "player_cards",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "create_duel",
       "discriminator": [
         49,
@@ -211,6 +303,7 @@
       "accounts": [
         {
           "name": "player",
+          "writable": true,
           "signer": true
         },
         {
@@ -299,7 +392,50 @@
           }
         },
         {
-          "name": "player_cards"
+          "name": "card_mint"
+        },
+        {
+          "name": "player_cards",
+          "writable": true
+        },
+        {
+          "name": "escrow",
+          "docs": [
+            "The card stays here until claim, so one card cannot back two reveals or be",
+            "borrowed for a single transaction. Escrowing at commit would show the card early."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel"
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -313,59 +449,6 @@
           }
         }
       ]
-    },
-    {
-      "name": "settle",
-      "discriminator": [
-        175,
-        42,
-        185,
-        87,
-        144,
-        131,
-        102,
-        212
-      ],
-      "accounts": [
-        {
-          "name": "duel",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  100,
-                  117,
-                  101,
-                  108
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "creator"
-              },
-              {
-                "kind": "account",
-                "path": "duel.nonce",
-                "account": "Duel"
-              }
-            ]
-          }
-        },
-        {
-          "name": "creator",
-          "writable": true,
-          "relations": [
-            "duel"
-          ]
-        },
-        {
-          "name": "opponent",
-          "writable": true
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -456,6 +539,21 @@
     },
     {
       "code": 6011,
+      "name": "AlreadyClaimed",
+      "msg": "Player has already claimed"
+    },
+    {
+      "code": 6012,
+      "name": "MissingCardAccounts",
+      "msg": "Pass the card mint, escrow and your card account to get your card back"
+    },
+    {
+      "code": 6013,
+      "name": "WrongCard",
+      "msg": "Card mint does not match the revealed card"
+    },
+    {
+      "code": 6014,
       "name": "MathOverflow",
       "msg": "Arithmetic overflow"
     }
@@ -499,7 +597,7 @@
     {
       "name": "Duel",
       "docs": [
-        "Holds both stakes until `settle` pays out and closes it."
+        "Holds both stakes until each player claims their share. Closed by the creator's claim."
       ],
       "type": {
         "kind": "struct",
@@ -573,6 +671,14 @@
             }
           },
           {
+            "name": "creator_claimed",
+            "type": "bool"
+          },
+          {
+            "name": "opponent_claimed",
+            "type": "bool"
+          },
+          {
             "name": "bump",
             "type": "u8"
           }
@@ -638,7 +744,7 @@
           {
             "name": "stats",
             "docs": [
-              "Copied at reveal so `settle` needs no card accounts."
+              "Copied at reveal so the outcome needs no card accounts."
             ],
             "type": {
               "defined": {
@@ -686,9 +792,17 @@
       "value": "[100, 117, 101, 108]"
     },
     {
+      "name": "ESCROW_SEED",
+      "docs": [
+        "A revealed card waits in this token account until its owner claims."
+      ],
+      "type": "bytes",
+      "value": "[101, 115, 99, 114, 111, 119]"
+    },
+    {
       "name": "MIN_STAKE",
       "docs": [
-        "Every payout must keep an emptied wallet rent-exempt, or settling could be blocked."
+        "Keeps every payout above the rent minimum of an empty wallet."
       ],
       "type": "u64",
       "value": "1000000"

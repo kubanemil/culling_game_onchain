@@ -2,10 +2,11 @@
 export const AssetErrorCode = {
   NotUpgradeAuthority: 6000,
   Unauthorized: 6001,
-  InvalidStats: 6002,
-  InvalidPrice: 6003,
-  InvalidMetadata: 6004,
-  MathOverflow: 6005
+  NotPendingAdmin: 6002,
+  InvalidStats: 6003,
+  InvalidPrice: 6004,
+  InvalidMetadata: 6005,
+  MathOverflow: 6006
 };
 
 export type AssetErrorName = keyof typeof AssetErrorCode;

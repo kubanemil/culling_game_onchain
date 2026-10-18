@@ -11,7 +11,10 @@ export const DuelErrorCode = {
   RevealWindowOpen: 6008,
   CommitmentMismatch: 6009,
   CardNotOwned: 6010,
-  MathOverflow: 6011
+  AlreadyClaimed: 6011,
+  MissingCardAccounts: 6012,
+  WrongCard: 6013,
+  MathOverflow: 6014
 };
 
 export type DuelErrorName = keyof typeof DuelErrorCode;

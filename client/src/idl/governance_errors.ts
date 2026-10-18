@@ -11,9 +11,11 @@ export const GovernanceErrorCode = {
   VotingNotEnded: 6008,
   TokensLocked: 6009,
   AlreadyExecuted: 6010,
-  QuorumNotReached: 6011,
-  ThresholdNotReached: 6012,
-  MathOverflow: 6013
+  ProposalExpired: 6011,
+  StaleProposal: 6012,
+  QuorumNotReached: 6013,
+  ThresholdNotReached: 6014,
+  MathOverflow: 6015
 };
 
 export type GovernanceErrorName = keyof typeof GovernanceErrorCode;

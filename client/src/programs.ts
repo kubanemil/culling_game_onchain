@@ -47,6 +47,8 @@ export const pda = {
 
   duel: (creator: PublicKey, nonce: bigint | number) =>
     find([seed("duel"), creator.toBuffer(), u64(nonce)], DUEL_PROGRAM_ID),
+  escrow: (duel: PublicKey, player: PublicKey) =>
+    find([seed("escrow"), duel.toBuffer(), player.toBuffer()], DUEL_PROGRAM_ID),
 
   governanceConfig: () => find([seed("config")], GOVERNANCE_PROGRAM_ID),
   governanceAuthority: () => find([seed("authority")], GOVERNANCE_PROGRAM_ID),
@@ -55,6 +57,9 @@ export const pda = {
   voter: (owner: PublicKey) => find([seed("voter"), owner.toBuffer()], GOVERNANCE_PROGRAM_ID),
   voteRecord: (proposal: PublicKey, owner: PublicKey) =>
     find([seed("vote"), proposal.toBuffer(), owner.toBuffer()], GOVERNANCE_PROGRAM_ID),
+  /** `field` is the CardField index: 0 name, 1 symbol, 2 uri. */
+  fieldVersion: (cardMint: PublicKey, field: number) =>
+    find([seed("field"), cardMint.toBuffer(), Buffer.from([field])], GOVERNANCE_PROGRAM_ID),
 
   programData: (program: PublicKey) =>
     find(

@@ -124,23 +124,26 @@ async function main() {
   await culling.claim(alice, round);
   await culling.claim(bob, round);
   await culling.withdrawProceeds(round);
-  console.log("claimed; admin withdrew the proceeds");
+  await culling.finalizeRound(round);
+  console.log("claimed; admin withdrew the proceeds; round finalized");
 
   step("Cards: Alice buys Brute, Bob buys Guard (10 CULL each, burned)");
   await culling.buyCard(alice, brute);
   await culling.buyCard(bob, guard);
 
-  step("Duel: commit, accept, reveal, settle");
+  step("Duel: commit, accept, reveal (cards go into escrow), claim");
   const stake = 10_000_000n;
   const { duel, secret: aliceSecret } = await culling.createDuel(alice, brute, stake, bob.publicKey);
   const bobSecret = await culling.acceptDuel(bob, duel, guard);
   await culling.reveal(alice, duel, brute, aliceSecret);
   await culling.reveal(bob, duel, guard, bobSecret);
+  const escrowRent = await connection.getBalance(pda.escrow(duel, bob.publicKey));
   const before = await connection.getBalance(bob.publicKey);
-  await culling.settle(duel);
-  const gained = (await connection.getBalance(bob.publicKey)) - before;
-  const outcome = gained === Number(2n * stake) ? "Bob wins" : gained === Number(stake) ? "draw" : "Alice wins";
-  console.log(`duel ${duel.toBase58()}: ${outcome}`);
+  await culling.claimDuel(bob, duel);
+  await culling.claimDuel(alice, duel);
+  const won = (await connection.getBalance(bob.publicKey)) - before - escrowRent;
+  const outcome = won === Number(2n * stake) ? "Bob wins" : won === Number(stake) ? "draw" : "Alice wins";
+  console.log(`duel ${duel.toBase58()}: ${outcome}; both cards are back`);
 
   step("Governance: deposit, propose a new URI for Brute, vote, execute");
   await culling.deposit(alice, 40n * TOKEN);

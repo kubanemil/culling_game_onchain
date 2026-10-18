@@ -423,6 +423,64 @@ export type Sale = {
       ]
     },
     {
+      "name": "finalizeRound",
+      "discriminator": [
+        239,
+        160,
+        254,
+        11,
+        254,
+        144,
+        53,
+        148
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "round",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  117,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "round.id",
+                "account": "round"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "initialize",
       "discriminator": [
         175,
@@ -936,6 +994,11 @@ export type Sale = {
     },
     {
       "code": 6021,
+      "name": "alreadyFinalized",
+      "msg": "Round is already finalized"
+    },
+    {
+      "code": 6022,
       "name": "mathOverflow",
       "msg": "Arithmetic overflow"
     }
@@ -1019,7 +1082,7 @@ export type Sale = {
           {
             "name": "supplyCap",
             "docs": [
-              "Sum of all round hard caps can never exceed this."
+              "Hard caps of open rounds plus tokens sold in finalized ones never exceed this."
             ],
             "type": "u64"
           },
@@ -1154,6 +1217,13 @@ export type Sale = {
           },
           {
             "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "finalized",
+            "docs": [
+              "Set once the unsold part of `hard_cap` has gone back to the supply cap."
+            ],
             "type": "bool"
           },
           {
