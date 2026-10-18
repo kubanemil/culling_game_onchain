@@ -1,13 +1,22 @@
 [workspace]
-members = [
-    "programs/*"
-]
+members = ["programs/*", "tests"]
 resolver = "2"
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.89.0"
+license = "MIT"
+
+[workspace.dependencies]
+anchor-lang = { version = "1.2.1", features = ["init-if-needed"] }
+anchor-spl = "1.2.1"
+solana-sha256-hasher = { version = "3.1", features = ["sha2"] }
 
 [profile.release]
 overflow-checks = true
 lto = "fat"
 codegen-units = 1
+
 [profile.release.build-override]
 opt-level = 3
 incremental = false

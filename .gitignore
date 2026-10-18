@@ -4,4 +4,6 @@ target
 **/*.rs.bk
 node_modules
 test-ledger
-.yarn
+.surfpool
+*-keypair.json
+.env

@@ -1,29 +1,23 @@
+skip_local_validator = true
+
 [toolchain]
+anchor_version = "1.2.1"
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.localnet]
-asset = "BwDuywJ5NxriMUEJ7EMKFth7joH3W2snbMfQtKp4nwrf"
-game = "5pgzgEQZ18P4w3iTy5dBjv3H4My2GgCM4FxXnHdxSBb7"
-governance = "9iEyttWJGvGBApj51JLj8dJP9S3ZWdQB2fv3h7RCfLCB"
-
-[registry]
-url = "https://api.apr.dev"
+asset = "4DZmGYrQ2ZuzAz2ZeJ9ucFRyrZG9h5bcmwsZ7c2dyLAa"
+duel = "HcyprDcax4Ffz6h9s1sA8X4Zh6yWwZuipw2qFvxG6CkE"
+governance = "Bxd1GMH7cBj7XfsN5cXzK5idHGrpSXG5aHakgMCqYvdt"
+sale = "64B6Rmfe4Jg5R4xdPCG3mHpaSihYJLyswC7dPutNQyjo"
 
 [provider]
-cluster = "Localnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "cargo test --workspace"
 
-[test]
-startup_wait = 5000
-shutdown_wait = 2000
-upgradeable = false
-
-[[test.genesis]]
-address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-program = "metadata.so"
+[hooks]
