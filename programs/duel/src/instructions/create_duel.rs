@@ -60,6 +60,8 @@ pub fn handle_create_duel(
         reveal_deadline: 0,
         creator_reveal: None,
         opponent_reveal: None,
+        creator_claimed: false,
+        opponent_claimed: false,
         bump: ctx.bumps.duel,
     });
     Ok(())

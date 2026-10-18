@@ -24,6 +24,12 @@ pub enum DuelError {
     CommitmentMismatch,
     #[msg("Player does not hold the revealed card")]
     CardNotOwned,
+    #[msg("Player has already claimed")]
+    AlreadyClaimed,
+    #[msg("Pass the card mint, escrow and your card account to get your card back")]
+    MissingCardAccounts,
+    #[msg("Card mint does not match the revealed card")]
+    WrongCard,
     #[msg("Arithmetic overflow")]
     MathOverflow,
 }

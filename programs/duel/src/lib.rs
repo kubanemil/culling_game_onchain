@@ -39,7 +39,7 @@ pub mod duel {
         instructions::reveal::handle_reveal(ctx, secret)
     }
 
-    pub fn settle(ctx: Context<Settle>) -> Result<()> {
-        instructions::settle::handle_settle(ctx)
+    pub fn claim(ctx: Context<Claim>) -> Result<()> {
+        instructions::claim::handle_claim(ctx)
     }
 }
