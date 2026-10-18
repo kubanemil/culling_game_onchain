@@ -46,7 +46,7 @@ const field = (f: CardField) => ({ [f]: {} }) as never;
 const fieldIndex = (encoded: object) =>
   CARD_FIELDS.indexOf(Object.keys(encoded)[0] as CardField);
 
-/** Thin typed wrapper over the four programs. The provider wallet pays fees and acts as admin. */
+/** The provider wallet pays fees and acts as admin. */
 export class Culling {
   readonly sale: Program<Sale>;
   readonly asset: Program<Asset>;
@@ -222,7 +222,6 @@ export class Culling {
     return secret;
   }
 
-  /** Moves one card into escrow until the player claims. */
   reveal(player: Keypair, duel: PublicKey, cardMint: PublicKey, secret: Buffer) {
     return this.duel.methods
       .reveal(bytes(secret))
@@ -246,10 +245,7 @@ export class Culling {
       .rpc();
   }
 
-  /**
-   * Pays the player's share and returns their card once both revealed or the window
-   * closed. The creator's claim closes the duel after the opponent is done.
-   */
+  /** Works once both players revealed or the reveal window closed. */
   async claimDuel(player: Keypair, duel: PublicKey) {
     const state = await this.duel.account.duel.fetch(duel);
     const revealed = player.publicKey.equals(state.creator)
