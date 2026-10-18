@@ -1,4 +1,3 @@
-//! LiteSVM integration tests. Run `anchor build` first: they load `target/deploy/*.so`.
 #![cfg(test)]
 
 mod harness;

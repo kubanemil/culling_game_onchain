@@ -1,5 +1,3 @@
-//! A deployed economy: token sale, three cards and governance, plus helpers to fund players.
-
 use ::asset::{CreateCardArgs, Stats};
 use ::governance::InitializeArgs as GovernanceArgs;
 use ::sale::{merkle, InitializeArgs as SaleArgs, RoundArgs, TOKEN_MINT};

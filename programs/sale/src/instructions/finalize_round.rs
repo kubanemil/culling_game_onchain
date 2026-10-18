@@ -19,8 +19,7 @@ pub struct FinalizeRound<'info> {
     pub round: Account<'info, Round>,
 }
 
-/// Anyone can call this once the round ends. The unsold part of the hard cap goes back
-/// to the supply cap, so later rounds can sell it.
+/// Anyone can call this, so unsold supply never waits on the admin.
 pub fn handle_finalize_round(ctx: Context<FinalizeRound>) -> Result<()> {
     let now = Clock::get()?.unix_timestamp;
     let round = &mut ctx.accounts.round;

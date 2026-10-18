@@ -14,7 +14,6 @@ pub const GOVERNANCE_PROGRAM_ID: Pubkey = pubkey!("Bxd1GMH7cBj7XfsN5cXzK5idHGrpS
 
 pub const GOVERNANCE_AUTHORITY_SEED: &[u8] = b"authority";
 
-/// The only signer allowed to change card metadata.
 pub const GOVERNANCE_AUTHORITY: Pubkey = Pubkey::new_from_array(
     derive_program_address(
         &[GOVERNANCE_AUTHORITY_SEED],

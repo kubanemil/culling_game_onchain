@@ -41,8 +41,6 @@ pub struct Duel {
 }
 
 impl Duel {
-    /// Both revealed: the cards fight. Window closed: a missing reveal forfeits, and if
-    /// neither revealed it is a draw.
     pub fn outcome(&self, duel: &Pubkey, now: i64) -> Result<Outcome> {
         match (&self.creator_reveal, &self.opponent_reveal) {
             (Some(creator), Some(opponent)) => Ok(fight(

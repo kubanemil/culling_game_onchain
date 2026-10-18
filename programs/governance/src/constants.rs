@@ -15,7 +15,6 @@ pub const VOTE_SEED: &[u8] = b"vote";
 #[constant]
 pub const FIELD_SEED: &[u8] = b"field";
 
-/// Signs metadata updates into the asset program. Has no account data.
 pub const AUTHORITY_SEED: &[u8] = asset::GOVERNANCE_AUTHORITY_SEED;
 
 const AUTHORITY_PDA: ([u8; 32], u8) =
