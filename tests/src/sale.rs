@@ -261,8 +261,7 @@ fn attack_a_buyer_cannot_exceed_allocation_by_moving_tokens() {
     sale.buy(0, 6 * TOKEN).unwrap();
     sale.buy(0, 4 * TOKEN).unwrap();
 
-    // Purchases vest in the sale program, so the wallet holds nothing that could be moved;
-    // the cap is checked against the Allocation PDA instead.
+    // Purchases vest in the program, so the wallet holds nothing to move out.
     assert_eq!(sale.world.tokens_of(&sale.buyers[0].pubkey()), 0);
     expect_error(sale.buy(0, 1), SaleError::AllocationExceeded);
 }

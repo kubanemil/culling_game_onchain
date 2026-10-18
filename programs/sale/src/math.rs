@@ -2,8 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::error::SaleError;
 
-/// Lamports owed for `amount` base units at `price` lamports per whole token.
-/// Rounds up so a dust purchase can never be free.
+/// Rounds up so a dust purchase is never free.
 pub fn purchase_cost(amount: u64, price: u64, decimals: u8) -> Result<u64> {
     let unit = 10u128
         .checked_pow(u32::from(decimals))
@@ -15,8 +14,7 @@ pub fn purchase_cost(amount: u64, price: u64, decimals: u8) -> Result<u64> {
     u64::try_from(cost).map_err(|_| SaleError::MathOverflow.into())
 }
 
-/// Tokens unlocked at `now` from `total`, vesting linearly from `start` over `duration`
-/// seconds, with nothing unlocked before `start + cliff`.
+/// Linear from `start` over `duration` seconds, with nothing before `start + cliff`.
 pub fn vested_amount(total: u64, start: i64, cliff: i64, duration: i64, now: i64) -> Result<u64> {
     let cliff_end = start.checked_add(cliff).ok_or(SaleError::MathOverflow)?;
     if now < cliff_end {

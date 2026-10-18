@@ -73,8 +73,7 @@ pub fn handle_buy(
         });
     }
 
-    // The cap lives in this PDA, not in the buyer's token balance, so moving tokens out
-    // of the wallet does not free up allocation.
+    // Counted in this PDA, not read from a balance, so moving tokens out frees nothing.
     let purchased = allocation
         .purchased
         .checked_add(amount)

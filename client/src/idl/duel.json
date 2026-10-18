@@ -463,9 +463,6 @@
   "types": [
     {
       "name": "Card",
-      "docs": [
-        "One per card type. The mint holds name, symbol and URI; this holds what the game reads."
-      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -641,7 +638,7 @@
           {
             "name": "stats",
             "docs": [
-              "Snapshot at reveal time, so a later metadata vote cannot change a live duel."
+              "Copied at reveal so `settle` needs no card accounts."
             ],
             "type": {
               "defined": {
@@ -699,7 +696,7 @@
     {
       "name": "REVEAL_WINDOW",
       "docs": [
-        "Seconds both players have to reveal once the duel is accepted."
+        "Seconds to reveal, counted from accept."
       ],
       "type": "i64",
       "value": "3600"

@@ -26,7 +26,6 @@ impl Stats {
     }
 }
 
-/// One per card type. The mint holds name, symbol and URI; this holds what the game reads.
 #[account]
 #[derive(InitSpace)]
 pub struct Card {

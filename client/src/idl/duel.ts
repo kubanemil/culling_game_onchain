@@ -469,9 +469,6 @@ export type Duel = {
   "types": [
     {
       "name": "card",
-      "docs": [
-        "One per card type. The mint holds name, symbol and URI; this holds what the game reads."
-      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -647,7 +644,7 @@ export type Duel = {
           {
             "name": "stats",
             "docs": [
-              "Snapshot at reveal time, so a later metadata vote cannot change a live duel."
+              "Copied at reveal so `settle` needs no card accounts."
             ],
             "type": {
               "defined": {
@@ -705,7 +702,7 @@ export type Duel = {
     {
       "name": "revealWindow",
       "docs": [
-        "Seconds both players have to reveal once the duel is accepted."
+        "Seconds to reveal, counted from accept."
       ],
       "type": "i64",
       "value": "3600"

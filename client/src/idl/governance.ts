@@ -1172,9 +1172,6 @@ export type Governance = {
   "types": [
     {
       "name": "card",
-      "docs": [
-        "One per card type. The mint holds name, symbol and URI; this holds what the game reads."
-      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -1228,7 +1225,7 @@ export type Governance = {
     {
       "name": "config",
       "docs": [
-        "Set once by the upgrade authority. Nothing can change it afterwards."
+        "Fixed at init; no instruction changes it."
       ],
       "type": {
         "kind": "struct",
@@ -1456,7 +1453,7 @@ export type Governance = {
     {
       "name": "voter",
       "docs": [
-        "A wallet's voting escrow. Its token account (the ATA of this PDA) holds the voting power."
+        "Voting escrow: the ATA of this PDA holds the voting power."
       ],
       "type": {
         "kind": "struct",
@@ -1468,8 +1465,7 @@ export type Governance = {
           {
             "name": "lockedUntil",
             "docs": [
-              "End of the latest proposal this voter voted on. Tokens stay locked until then,",
-              "so the same tokens cannot vote twice through another wallet."
+              "End of the last proposal voted on, so the same tokens cannot vote from two wallets."
             ],
             "type": "i64"
           },

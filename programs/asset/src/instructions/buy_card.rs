@@ -51,8 +51,7 @@ pub struct BuyCard<'info> {
     pub system_program: Program<'info, System>,
 }
 
-/// Burns the card price in game tokens and mints one card. Burning means there is no
-/// treasury for anyone to drain.
+/// The price is burned, so there is no treasury to drain.
 pub fn handle_buy_card(ctx: Context<BuyCard>) -> Result<()> {
     let accounts = ctx.accounts;
     burn(

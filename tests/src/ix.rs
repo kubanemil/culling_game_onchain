@@ -1,5 +1,3 @@
-//! Instruction builders from the Anchor-generated `accounts` and `instruction` modules.
-
 use anchor_lang::{
     prelude::Pubkey,
     solana_program::{bpf_loader_upgradeable, instruction::Instruction},

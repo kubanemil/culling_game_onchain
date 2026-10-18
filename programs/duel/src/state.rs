@@ -11,7 +11,7 @@ pub enum DuelStatus {
 #[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Revealed {
     pub card: Pubkey,
-    /// Snapshot at reveal time, so a later metadata vote cannot change a live duel.
+    /// Copied at reveal so `settle` needs no card accounts.
     pub stats: Stats,
     pub secret: [u8; 32],
 }
@@ -33,8 +33,7 @@ pub struct Duel {
     pub bump: u8,
 }
 
-/// What a player commits to: the card they will play and a random secret, bound to this
-/// duel and this player so a commitment cannot be copied or replayed.
+/// Bound to the duel and the player, so a commitment cannot be copied or replayed.
 pub fn commitment(duel: &Pubkey, player: &Pubkey, card: &Pubkey, secret: &[u8; 32]) -> [u8; 32] {
     hashv(&[duel.as_ref(), player.as_ref(), card.as_ref(), secret]).to_bytes()
 }

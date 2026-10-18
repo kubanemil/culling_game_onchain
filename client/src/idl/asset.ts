@@ -558,9 +558,6 @@ export type Asset = {
   "types": [
     {
       "name": "card",
-      "docs": [
-        "One per card type. The mint holds name, symbol and URI; this holds what the game reads."
-      ],
       "type": {
         "kind": "struct",
         "fields": [

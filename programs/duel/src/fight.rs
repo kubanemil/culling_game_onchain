@@ -1,5 +1,4 @@
-//! The battle is a pure function of both cards and the shared randomness.
-//! Both cards strike at the same time each round, so neither side moves first.
+//! Both cards strike at once each round, so neither side moves first.
 
 use asset::Stats;
 
@@ -16,8 +15,7 @@ pub enum Outcome {
     Draw,
 }
 
-/// Health can go below zero, so when both cards fall in the same round the smaller
-/// overkill wins and only an exact tie is a draw.
+/// Health goes below zero, so a double knockout goes to the smaller overkill.
 pub fn fight(creator: &Stats, opponent: &Stats, seed: &[u8; 32]) -> Outcome {
     let mut creator_hp = i32::from(creator.health);
     let mut opponent_hp = i32::from(opponent.health);
@@ -35,8 +33,7 @@ pub fn fight(creator: &Stats, opponent: &Stats, seed: &[u8; 32]) -> Outcome {
     }
 }
 
-/// At least 1, so a duel between two walls still ends on health. Stats are u16, so 16
-/// rounds of this cannot overflow an i32.
+/// At least 1, so two walls still end on health.
 fn damage(attack: u16, roll: u8, defense: u16) -> i32 {
     (i32::from(attack) + i32::from(roll % ROLL_SIDES) - i32::from(defense)).max(1)
 }

@@ -27,15 +27,14 @@ pub struct Round {
     /// Lamports held by this account for the admin.
     pub proceeds: u64,
     pub merkle_root: [u8; 32],
-    /// Vesting starts at `end_ts`. Seconds until anything unlocks.
+    /// Seconds after `end_ts` before anything unlocks.
     pub cliff: i64,
-    /// Seconds from `end_ts` until everything is unlocked.
+    /// Seconds after `end_ts` until everything unlocks.
     pub vesting: i64,
     pub paused: bool,
     pub bump: u8,
 }
 
-/// One per wallet per round: the allowlisted cap, what was bought and what was claimed.
 #[account]
 #[derive(InitSpace)]
 pub struct Allocation {

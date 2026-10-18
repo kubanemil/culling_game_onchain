@@ -943,9 +943,6 @@ export type Sale = {
   "types": [
     {
       "name": "allocation",
-      "docs": [
-        "One per wallet per round: the allowlisted cap, what was bought and what was claimed."
-      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -1144,14 +1141,14 @@ export type Sale = {
           {
             "name": "cliff",
             "docs": [
-              "Vesting starts at `end_ts`. Seconds until anything unlocks."
+              "Seconds after `end_ts` before anything unlocks."
             ],
             "type": "i64"
           },
           {
             "name": "vesting",
             "docs": [
-              "Seconds from `end_ts` until everything is unlocked."
+              "Seconds after `end_ts` until everything unlocks."
             ],
             "type": "i64"
           },

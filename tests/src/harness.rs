@@ -228,13 +228,11 @@ pub fn pda(seeds: &[&[u8]], program: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(seeds, program).0
 }
 
-/// Fails unless the transaction failed with this Anchor error (program or framework).
 #[track_caller]
 pub fn expect_error(result: TxResult, code: impl Debug) {
     expect_log(result, &format!("Error Code: {code:?}."));
 }
 
-/// Fails unless the transaction failed and some log line contains `needle`.
 #[track_caller]
 pub fn expect_log(result: TxResult, needle: &str) {
     match result {
@@ -257,8 +255,7 @@ fn program_path(name: &str) -> PathBuf {
         .join(format!("{name}.so"))
 }
 
-/// LiteSVM deploys upgradeable programs with no authority; set one so the
-/// upgrade-authority checks in each `initialize` can be exercised.
+/// LiteSVM deploys with no upgrade authority; set one so the `initialize` checks can run.
 fn set_upgrade_authority(svm: &mut LiteSVM, program: &Pubkey, authority: &Pubkey) {
     let programdata = pda(&[program.as_ref()], &bpf_loader_upgradeable::ID);
     let mut account = svm.get_account(&programdata).expect("programdata");

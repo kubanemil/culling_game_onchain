@@ -106,7 +106,6 @@ impl World {
         }
     }
 
-    /// Creates a round and returns its id.
     pub fn create_round(&mut self, args: RoundArgs) -> u64 {
         let admin = self.admin();
         let id = self.rounds;

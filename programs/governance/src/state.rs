@@ -3,7 +3,7 @@ use asset::{CardField, MAX_URI_LEN};
 
 use crate::error::GovernanceError;
 
-/// Set once by the upgrade authority. Nothing can change it afterwards.
+/// Fixed at init; no instruction changes it.
 #[account]
 #[derive(InitSpace)]
 pub struct Config {
@@ -58,13 +58,12 @@ impl Proposal {
     }
 }
 
-/// A wallet's voting escrow. Its token account (the ATA of this PDA) holds the voting power.
+/// Voting escrow: the ATA of this PDA holds the voting power.
 #[account]
 #[derive(InitSpace)]
 pub struct Voter {
     pub owner: Pubkey,
-    /// End of the latest proposal this voter voted on. Tokens stay locked until then,
-    /// so the same tokens cannot vote twice through another wallet.
+    /// End of the last proposal voted on, so the same tokens cannot vote from two wallets.
     pub locked_until: i64,
     pub bump: u8,
 }

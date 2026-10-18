@@ -1,5 +1,4 @@
-//! Allowlist proofs. Leaves and inner nodes use different prefixes so a node can never be
-//! passed off as a leaf, and pairs are hashed in sorted order so proofs need no left/right bits.
+//! Leaves and inner nodes use different prefixes so a node cannot pass as a leaf.
 
 use anchor_lang::prelude::Pubkey;
 use solana_sha256_hasher::hashv;

@@ -26,8 +26,7 @@ pub struct CloseVote<'info> {
     pub vote: Account<'info, VoteRecord>,
 }
 
-/// Returns the vote record's rent once voting is over. Voting needs `now < end_ts`, so a
-/// closed record can never be recreated to vote again.
+/// Voting needs `now < end_ts`, so a closed record cannot be recreated to vote again.
 pub fn handle_close_vote(ctx: Context<CloseVote>) -> Result<()> {
     let now = Clock::get()?.unix_timestamp;
     require!(

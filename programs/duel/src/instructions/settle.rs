@@ -28,8 +28,7 @@ pub struct Settle<'info> {
     pub opponent: SystemAccount<'info>,
 }
 
-/// Anyone can settle. Both revealed: the cards fight. Window closed: whoever revealed
-/// takes the pot, and if nobody did, both get their stake back.
+/// Anyone can settle. A missing reveal forfeits; if neither revealed, both are refunded.
 pub fn handle_settle(ctx: Context<Settle>) -> Result<()> {
     let now = Clock::get()?.unix_timestamp;
     let duel_key = ctx.accounts.duel.key();
