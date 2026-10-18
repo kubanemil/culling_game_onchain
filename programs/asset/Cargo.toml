@@ -23,6 +23,7 @@ custom-panic = []
 [dependencies]
 anchor-lang.workspace = true
 anchor-spl.workspace = true
+culling-common.workspace = true
 sale = { path = "../sale", features = ["no-entrypoint"] }
 
 [lints.rust]

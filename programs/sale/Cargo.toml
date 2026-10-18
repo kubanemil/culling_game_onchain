@@ -23,6 +23,7 @@ custom-panic = []
 [dependencies]
 anchor-lang.workspace = true
 anchor-spl.workspace = true
+culling-common.workspace = true
 solana-sha256-hasher.workspace = true
 
 

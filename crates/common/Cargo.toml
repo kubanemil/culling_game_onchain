@@ -1,0 +1,11 @@
+[package]
+name = "culling-common"
+version = "0.1.0"
+description = "Helpers shared by the Culling Game programs"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+anchor-lang.workspace = true
